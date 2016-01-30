@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
+using Holoville.HOTween;
 
 public enum eCoinState {
 	Created,
@@ -8,32 +9,46 @@ public enum eCoinState {
 	Moved
 }
 
-public class Coin : MonoBehaviour 
+public class Coin : MonoBehaviour
 {
-	private SpriteRenderer 	m_spriteRenderer;
+	public static float coinWidth	= 205f * 0.01f;
+	public static float coinHeight	= 205f * 0.01f;
+	public static float border		= 5f * 0.01f;
 
-	public void init(int placeId, int x, int y, int coinId, Sprite sp) {
-
+	public void init(int placeId, int x, int y, int coinId, Sprite sp)
+	{
 		print ("[Coin] init placeId: " + placeId);
+		
+		Level currLevel = GameController.Instance.CurrentLevel;
 
-		Level currLevel = Game.Inst.CurrentLevel;
-
-		m_spriteRenderer = GetComponent<SpriteRenderer> ();
+		SpriteRenderer spriteRenderer = GetComponent<SpriteRenderer> ();
 		
 		m_coinId = coinId;
 
-		m_spriteRenderer.sprite = sp;
+		spriteRenderer.sprite = sp;
 
 		updateLoc (placeId, x, y);
 		Deleted = false;
+		State = eCoinState.Created;
 
-		m_spriteRenderer.enabled = true;
+		spriteRenderer.enabled = true;
 		GetComponent<BoxCollider2D> ().enabled = true;
 		refreshPosition ();
 
-		transform.localScale = new Vector3 (0.9f, 0.9f);
+		Vector2 size = sp.bounds.size;
+
+		transform.localScale = new Vector3(coinWidth / size.x, coinHeight / size.y);
 	}
-	
+
+	public void changeCoinId(int nId)
+	{
+		SpriteRenderer spriteRenderer = GetComponent<SpriteRenderer> ();
+		
+		CoinId = nId;
+
+		spriteRenderer.sprite = Level.currLevel().coinSprites[nId];
+	}
+
 	public int CoinId {
 		get { return m_coinId; }
 		set { m_coinId = value; }
@@ -60,12 +75,15 @@ public class Coin : MonoBehaviour
 		set { m_delay = value; }
 	}
 
-	public Vector3 getRealPosition() {
+	public Vector3 getRealPosition()
+	{
+		Map m = GameController.Instance.map;
+		
+		Vector3 offset = new Vector3 (m.CoinOffset.x, m.CoinOffset.y);
 
-		//Vector3 size = m_spriteRenderer.sprite.bounds.size;
-		Vector3 scaleSize = new Vector3(1.7f, 1.7f);
+		Vector3 pos = new Vector3 ((coinWidth + border / 2) * XPos, (coinHeight + border / 2) * YPos);
 
-		return new Vector3 (scaleSize.x * XPos, scaleSize.y * YPos) + (scaleSize / 2.8f);
+		return pos;
 	}
 
 	public void refreshPosition() {
@@ -79,7 +97,8 @@ public class Coin : MonoBehaviour
 		m_x = x;
 		m_y = y;
 
-		string name = m_spriteRenderer.sprite.name + "_" + PlaceId;
+		SpriteRenderer spriteRenderer = GetComponent<SpriteRenderer> ();
+		string name = spriteRenderer.sprite.name + "_" + PlaceId;
 		gameObject.name = name;
 	}
 	
@@ -134,16 +153,21 @@ public class Coin : MonoBehaviour
 		if (State != eCoinState.Idle) {
 			return;
 		}
-		Map m = GameObject.Find ("Map").GetComponent<Map>();
+		Map map = GameController.Instance.map;
 
-		m.Select = this;
+		map.Select = this;
 	}
 
-	void OnMouseUp() {
-
-		Map m = GameObject.Find ("Map").GetComponent<Map>();
+	void OnMouseUp()
+	{
+		Map map = GameController.Instance.map;
 		
-		m.Select = null;
+		map.Select = null;
+
+		if (Debug.isDebugBuild)
+		{
+			map.controller.OnCoinTap(this);
+		}
 	}
 
 	void OnMouseOver() {
@@ -153,40 +177,68 @@ public class Coin : MonoBehaviour
 			return;
 		}
 
-		Map m = GameObject.Find ("Map").GetComponent<Map>();
+		Map map = GameController.Instance.map;
 
-		if (m.Select == this || m.Select == null) {
+		if (map.Select == this || map.Select == null)
+		{
 			return;
 		}
 	
-		if (isNeighbour (m.Select)) {
-
-			m.swap(this, m.Select);
+		if (isNeighbour (map.Select))
+		{
+			map.swap(this, map.Select);
 		}
-		else {
-
-			m.Select = null;
+		else
+		{
+			map.Select = null;
 		}
 	}
 
-	public void setDrop(Map m, Vector3 from) {
+	public void moveTo(Vector3 pos, float delay, string msg) {
 
-		transform.localPosition = from;
+		m_move = HOTween.To (transform, delay, new TweenParms()
+		            .Prop ("localPosition", pos)
+		            .Ease (EaseType.EaseInOutQuad)
+		            .OnStepComplete (onActionDone));
 
-		if (m_move == null) {
-			m_move = new MoveAction (m, gameObject, 0.2f, getRealPosition (), "drop");
-		} 
-		else {
-			m_move.refresh(getRealPosition(), 0.2f);
+		m_msg = msg;
 
-			m_move.init();
-		}
 		State = eCoinState.Moved;
+
+		m_move.enabled = false;
+	}
+
+	public void moveToSpeedBased(Vector3 pos, float speed, string msg) {
+		
+		m_move = HOTween.To (transform, speed, new TweenParms()
+		            .Prop ("localPosition", pos).SpeedBased() // Position tween (set as relative)
+		            .Ease (EaseType.EaseInOutQuad) // Ease
+		            .OnStepComplete (onActionDone));
+		
+		m_msg = msg;
+		
+		State = eCoinState.Moved;
+
+		m_move.enabled = false;
+	}
+
+	public void moveToCell(float delay, string msg) {
+		moveTo (getRealPosition (), delay, msg);
 	}
 
 	public void dieWithDelay(float delay) {
 		m_delay = delay;
 		m_needDie = true;
+	}
+
+	public void destroy() {
+
+		State = eCoinState.Deleted;
+		Map map = GameController.Instance.map;
+		map.RemoveList.Add(this);
+
+		GetComponent<SpriteRenderer>().enabled = false;
+		GetComponent<BoxCollider2D>().enabled = false;
 	}
 
 	void Update() {
@@ -195,36 +247,45 @@ public class Coin : MonoBehaviour
 			m_delay -= Time.deltaTime;
 		} 
 		else if (m_needDie) {
-			State = eCoinState.Deleted;
-			Map m = GameObject.Find("Map").GetComponent<Map>();
-			m.RemoveList.Add(this);
+
+			destroy();
+
 			m_needDie = false;
+
+			return;
 		}
 
-		if (m_delay <= 0f && m_move != null) {
+		if (m_delay <= 0 && m_move != null && !m_move.enabled)
+		{
+			Map map = GameController.Instance.map;
+			map.onMoveBegin (this);
 
-			if (!m_move.Done) {
-
-				if( !m_move.Started ) {
-					m_move.init();
-				}
-
-				m_move.update(Time.deltaTime);
-
-				if (m_move.Done) {
-					State = eCoinState.Idle;
-				}
-			}
+			m_move.enabled = true;
 		}
+	}
+
+	public void onActionDone() {
+		State = eCoinState.Idle;
+
+		Map map = GameController.Instance.map;
+
+		map.onMoveDone (this, m_msg);
+	}
+
+	public bool Disabled {
+		get { return m_disabled; }
+		set { m_disabled = value; }
 	}
 
 	private bool m_needDie;
 	private float m_delay;
-	private MoveAction m_move;
+	private Tweener m_move;
 	private eCoinState m_state;
 	private int m_coinId;
 	private int m_placeId;
 	private int m_x;
 	private int m_y;
 	private bool m_deleted;
+	private bool m_disabled = false;
+	private string m_msg;
 }

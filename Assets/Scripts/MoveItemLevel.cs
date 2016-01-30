@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.Collections;
 
 public class MoveItemStrategy : GameStrategy {
@@ -9,12 +9,11 @@ public class MoveItemStrategy : GameStrategy {
 		m_coinId = coinId;
 		m_coinSprite = sp;
 	}
-
-	public override Coin coinForIndex(bool init, int index) 
-	{
-		if (init && index == m_inIndex) 
-		{
-			Level currLevel = Game.Inst.CurrentLevel;
+	
+	public override Coin coinForIndex(bool init, int index) {
+		if (init && index == m_inIndex) {
+			GameController controller = GameObject.Find ("GameController").GetComponent<GameController>();
+			Level currLevel = controller.CurrentLevel;
 			
 			return GameMap.createCoin (index, currLevel.maxCoinsCount() + 1, m_coinSprite);
 		}
@@ -48,8 +47,7 @@ public class MoveItemStrategy : GameStrategy {
 	Sprite m_coinSprite;
 }
 
-public class MoveItemLevel : Level 
-{
+public class MoveItemLevel : Level {
 
 	public int topInX;
 	public int bottomOutX;

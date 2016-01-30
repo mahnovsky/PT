@@ -1,44 +1,52 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.Collections;
 
 public abstract class Level : MonoBehaviour {
 
-	public enum Mode 
+	public enum Mode
 	{
 		Classic,
 		MoveItem
 	}
 
-	public Sprite [] coinSprites;
-	protected Mode m_mode;
+	public Sprite []	coinSprites;
+	public Point[]		disabledCoins;
+	protected Mode		m_mode;
 
-	public Mode LevelMode 
+	public Mode LevelMode
 	{
 		get { return m_mode; }
 		protected set { m_mode = value; }
 	}
 
-	public int maxCoinsCount() 
+	public int maxCoinsCount()
 	{
 		return coinSprites.Length;
 	}
 
-	public static Level currLevel() 
+	public static Level currLevel()
 	{
-		if (Game.Inst == null) 
+		if (GameController.Instance == null)
 		{
 			return null;
 		}
 
-		return Game.Inst.CurrentLevel;
+		return GameController.Instance.CurrentLevel;
 	}
 
-	public void loadNextLevel() 
+	public void loadNextLevel()
 	{
-		++Game.LevelNum;
+		++GameController.LevelNum;
 		Application.LoadLevel ("Game");
 	}
 
 	public abstract void init();
 	public abstract GameStrategy getStrategy(Map map);
+}
+
+
+public class LevelInfo {
+
+	bool locked;
+	int reward;
 }

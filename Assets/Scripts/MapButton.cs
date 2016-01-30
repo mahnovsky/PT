@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.Collections;
 
 public class MapButton : MonoBehaviour {
@@ -17,7 +17,7 @@ public class MapButton : MonoBehaviour {
 	void OnMouseUp() {
 		if (m_pressed) {
 			Application.LoadLevel ("Game");
-			Game.LevelNum = Level;
+			GameController.LevelNum = Level;
 		}
 
 		m_pressed = false;

@@ -35,6 +35,7 @@ public abstract class Action  {
 
 	public object UserData {
 		get { return m_userData; }
+		set { m_userData = value; }
 	}
 
 	public bool Started {
