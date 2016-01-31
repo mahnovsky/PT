@@ -24,33 +24,39 @@ public class GameController : MonoBehaviour
 
 	void OnGUI()
 	{
-		if (!Debug.isDebugBuild) {
+		if (!Debug.isDebugBuild)
+		{
 			return;
 		}
 
 		GUI.Label (new Rect (0, 0, 100, 50), m_levelNumStr, m_style);
 
-		if (m_currentLevel != null) {
-		
+		if (m_currentLevel != null)
+		{
 			GUI.Label (new Rect (0, 30, 100, 50), m_mode, m_style);
 		}
 
-		if (!enableCheats) {
+		if (!enableCheats)
+		{
 			return;
 		}
 
 		string sw = m_changeCoin ? "Change Coin ON" : "Change Coin OFF";
-		if (GUI.Button (new Rect (0, 30, 200, 50), sw)) {
+		if (GUI.Button (new Rect (0, 30, 200, 50), sw))
+		{
 			m_changeCoin = !m_changeCoin;
 		}
 
 		Texture texture = CurrentLevel.coinSprites [m_currentCoin].texture;
-		if (GUI.Button (new Rect (0, 80, 100, 50), texture)) {
+		if (GUI.Button (new Rect (0, 80, 100, 50), texture))
+		{
 			int max = CurrentLevel.coinSprites.Length;
-			if(m_currentCoin  + 1 < max) {
+			if(m_currentCoin  + 1 < max)
+			{
 				++m_currentCoin;
 			}
-			else {
+			else
+			{
 				m_currentCoin = 0;
 			}
 		}
@@ -60,7 +66,8 @@ public class GameController : MonoBehaviour
 	{
 		m_currentLevel = null;
 
-		if (m_levelNum <= 0) {
+		if (m_levelNum <= 0)
+		{
 			m_levelNum = 1;
 		}
 
@@ -71,47 +78,54 @@ public class GameController : MonoBehaviour
 		m_currentLevel.init ();
 	}
 
-	public static int LevelNum  {
+	public static int LevelNum
+	{
 		get { return m_levelNum; }
 		set { m_levelNum = value; }
 	}
 
-	public Level CurrentLevel {
+	public Level CurrentLevel
+	{
 		get { return m_currentLevel; }
 	}
 
-	public void OnCoinTap(Coin c) {
-		if (m_changeCoin) {
+	public void OnCoinTap(Coin c)
+	{
+		if (m_changeCoin)
+		{
 			c.changeCoinId (m_currentCoin);
 		}
 	}
 
-	public void OnMenuButton() {
+	public void OnMenuButton()
+	{
 		Application.LoadLevel ("MainMenu");
 	}
 
-	public void OnMapBtn() {
+	public void OnMapBtn()
+	{
 		Application.LoadLevel ("Map");
 	}
 
-	public void OnLevelEnd() {
-		//Application.LoadLevel ("Map");
-
+	public void OnLevelEnd()
+	{
+		
 		levelEndPanel.SetActive (true);
-
-		//GameProgress.Instance.unlockLevel (LevelNum + 1);
 	}
 
-	public void OnRepeatLevelBtn() {
+	public void OnRepeatLevelBtn()
+	{
 		Application.LoadLevel ("Game");
 	}
 
-	public void OnNextLevelBtn() {
+	public void OnNextLevelBtn()
+	{
 		++LevelNum;
 		Application.LoadLevel ("Game");
 	}
 
-	public static GameController Instance {
+	public static GameController Instance
+	{
 		get { return _inst; }
 	}
 

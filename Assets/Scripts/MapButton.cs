@@ -1,21 +1,25 @@
 using UnityEngine;
 using System.Collections;
 
-public class MapButton : MonoBehaviour {
-
+public class MapButton : MonoBehaviour
+{
 	public Sprite [] progress;
 
 	// Use this for initialization
-	void Start () {
+	void Start ()
+	{
 		m_pressed = false;
 	}
 	
-	void OnMouseDown() {
+	void OnMouseDown()
+	{
 		m_pressed = true;
 	}
 
-	void OnMouseUp() {
-		if (m_pressed) {
+	void OnMouseUp()
+	{
+		if (m_pressed)
+		{
 			Application.LoadLevel ("Game");
 			GameController.LevelNum = Level;
 		}
@@ -23,7 +27,8 @@ public class MapButton : MonoBehaviour {
 		m_pressed = false;
 	}
 
-	public int Level {
+	public int Level
+	{
 		get { return m_level; }
 		set { m_level = value; }
 	}

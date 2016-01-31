@@ -49,28 +49,34 @@ public class Coin : MonoBehaviour
 		spriteRenderer.sprite = Level.currLevel().coinSprites[nId];
 	}
 
-	public int CoinId {
+	public int CoinId
+	{
 		get { return m_coinId; }
 		set { m_coinId = value; }
 	}
 	
-	public int PlaceId {
+	public int PlaceId
+	{
 		get { return m_placeId; }
 	}
 	
-	public int XPos {
+	public int XPos
+	{
 		get { return m_x; }
 	}
 	
-	public int YPos {
+	public int YPos
+	{
 		get { return m_y; }
 	}
 
-	public Point Position {
+	public Point Position
+	{
 		get { return new Point(XPos, YPos); }
 	}
 
-	public float Delay {
+	public float Delay
+	{
 		get { return m_delay; }
 		set { m_delay = value; }
 	}
@@ -86,13 +92,13 @@ public class Coin : MonoBehaviour
 		return pos;
 	}
 
-	public void refreshPosition() {
-
+	public void refreshPosition()
+	{
 		transform.localPosition = getRealPosition ();
 	}
 	
-	public void updateLoc(int newIndex, int x, int y) {
-
+	public void updateLoc(int newIndex, int x, int y)
+	{
 		m_placeId = newIndex;
 		m_x = x;
 		m_y = y;
@@ -102,44 +108,53 @@ public class Coin : MonoBehaviour
 		gameObject.name = name;
 	}
 	
-	public bool Deleted {
+	public bool Deleted
+	{
 		get { return m_deleted; }
 		set { m_deleted = value; }
 	}
 
-	public eCoinState State {
+	public eCoinState State
+	{
 		get { return m_state; }
 		set { changeState(value); }
 	}
 
-	private void changeState(eCoinState state) {
-
-		if (state == m_state) {
+	private void changeState(eCoinState state)
+	{
+		if (state == m_state)
+		{
 			return;
 		}
 
-		if (m_state == eCoinState.Created && (state == eCoinState.Moved || state == eCoinState.Idle)) {
+		if (m_state == eCoinState.Created && (state == eCoinState.Moved || state == eCoinState.Idle))
+		{
 			m_state = state;
 		}
 
-		if (m_state == eCoinState.Deleted && state == eCoinState.Created) {
+		if (m_state == eCoinState.Deleted && state == eCoinState.Created)
+		{
 			m_state = state;
 		}
 
-		if (m_state == eCoinState.Idle && (state == eCoinState.Moved || state == eCoinState.Deleted)) {
+		if (m_state == eCoinState.Idle && (state == eCoinState.Moved || state == eCoinState.Deleted))
+		{
 			m_state = state;
 		}
 
-		if (m_state == eCoinState.Moved && state == eCoinState.Idle) {
+		if (m_state == eCoinState.Moved && state == eCoinState.Idle)
+		{
 			m_state = state;
 		}
 
-		if (m_state != state) {
+		if (m_state != state)
+		{
 			Debug.Log("State change fail m_state: " + m_state + ", state: " + state);
 		}
 	}
 
-	public bool isNeighbour(Coin other) {
+	public bool isNeighbour(Coin other)
+	{
 	
 		int deltaX = Mathf.Abs(XPos - other.XPos);
 		int deltaY = Mathf.Abs(YPos - other.YPos);
@@ -148,9 +163,11 @@ public class Coin : MonoBehaviour
 			(deltaX == 0 && deltaY == 1);
 	}
 
-	void OnMouseDown() {
+	void OnMouseDown()
+	{
 
-		if (State != eCoinState.Idle) {
+		if (State != eCoinState.Idle)
+		{
 			return;
 		}
 		Map map = GameController.Instance.map;
@@ -170,9 +187,10 @@ public class Coin : MonoBehaviour
 		}
 	}
 
-	void OnMouseOver() {
-	
-		if (State != eCoinState.Idle) {
+	void OnMouseOver()
+	{ 
+		if (State != eCoinState.Idle)
+		{
 			Debug.Log("Failed swap coin state: " + State);
 			return;
 		}
@@ -194,8 +212,8 @@ public class Coin : MonoBehaviour
 		}
 	}
 
-	public void moveTo(Vector3 pos, float delay, string msg) {
-
+	public void moveTo(Vector3 pos, float delay, string msg)
+	{
 		m_move = HOTween.To (transform, delay, new TweenParms()
 		            .Prop ("localPosition", pos)
 		            .Ease (EaseType.EaseInOutQuad)
@@ -208,8 +226,8 @@ public class Coin : MonoBehaviour
 		m_move.enabled = false;
 	}
 
-	public void moveToSpeedBased(Vector3 pos, float speed, string msg) {
-		
+	public void moveToSpeedBased(Vector3 pos, float speed, string msg)
+	{	
 		m_move = HOTween.To (transform, speed, new TweenParms()
 		            .Prop ("localPosition", pos).SpeedBased() // Position tween (set as relative)
 		            .Ease (EaseType.EaseInOutQuad) // Ease
@@ -222,17 +240,19 @@ public class Coin : MonoBehaviour
 		m_move.enabled = false;
 	}
 
-	public void moveToCell(float delay, string msg) {
+	public void moveToCell(float delay, string msg)
+	{
 		moveTo (getRealPosition (), delay, msg);
 	}
 
-	public void dieWithDelay(float delay) {
+	public void dieWithDelay(float delay)
+	{
 		m_delay = delay;
 		m_needDie = true;
 	}
 
-	public void destroy() {
-
+	public void destroy()
+	{
 		State = eCoinState.Deleted;
 		Map map = GameController.Instance.map;
 		map.RemoveList.Add(this);
@@ -241,13 +261,14 @@ public class Coin : MonoBehaviour
 		GetComponent<BoxCollider2D>().enabled = false;
 	}
 
-	void Update() {
-
-		if (m_delay > 0f) {
+	void Update()
+	{
+		if (m_delay > 0f)
+		{
 			m_delay -= Time.deltaTime;
 		} 
-		else if (m_needDie) {
-
+		else if (m_needDie)
+		{
 			destroy();
 
 			m_needDie = false;
@@ -264,7 +285,8 @@ public class Coin : MonoBehaviour
 		}
 	}
 
-	public void onActionDone() {
+	public void onActionDone()
+	{
 		State = eCoinState.Idle;
 
 		Map map = GameController.Instance.map;
@@ -272,7 +294,8 @@ public class Coin : MonoBehaviour
 		map.onMoveDone (this, m_msg);
 	}
 
-	public bool Disabled {
+	public bool Disabled
+	{
 		get { return m_disabled; }
 		set { m_disabled = value; }
 	}
