@@ -11,15 +11,16 @@ public enum eCoinState {
 
 public class Coin : MonoBehaviour
 {
-	public static float coinWidth	= 205f * 0.01f;
-	public static float coinHeight	= 205f * 0.01f;
+	public static float coinWidth	= 200f * 0.01f;
+	public static float coinHeight	= 200f * 0.01f;
 	public static float border		= 5f * 0.01f;
+	private GameObject m_effect;
 
 	public void init(int placeId, int x, int y, int coinId, Sprite sp)
 	{
 		print ("[Coin] init placeId: " + placeId);
 		
-		Level currLevel = GameController.Instance.CurrentLevel;
+		Level currLevel = GameController.CurrentLevel;
 
 		SpriteRenderer spriteRenderer = GetComponent<SpriteRenderer> ();
 		
@@ -46,7 +47,7 @@ public class Coin : MonoBehaviour
 		
 		CoinId = nId;
 
-		spriteRenderer.sprite = Level.currLevel().coinSprites[nId];
+		spriteRenderer.sprite = GameController.CoinSprites[nId];
 	}
 
 	public int CoinId
@@ -81,7 +82,7 @@ public class Coin : MonoBehaviour
 		set { m_delay = value; }
 	}
 
-	public Vector3 getRealPosition()
+	public Vector3 GetRealPosition()
 	{
 		Map m = GameController.Instance.map;
 		
@@ -94,7 +95,7 @@ public class Coin : MonoBehaviour
 
 	public void refreshPosition()
 	{
-		transform.localPosition = getRealPosition ();
+		transform.localPosition = GetRealPosition ();
 	}
 	
 	public void updateLoc(int newIndex, int x, int y)
@@ -165,11 +166,11 @@ public class Coin : MonoBehaviour
 
 	void OnMouseDown()
 	{
-
 		if (State != eCoinState.Idle)
 		{
 			return;
 		}
+
 		Map map = GameController.Instance.map;
 
 		map.Select = this;
@@ -183,7 +184,7 @@ public class Coin : MonoBehaviour
 
 		if (Debug.isDebugBuild)
 		{
-			map.controller.OnCoinTap(this);
+			GameController.Instance.OnCoinTap(this);
 		}
 	}
 
@@ -242,13 +243,17 @@ public class Coin : MonoBehaviour
 
 	public void moveToCell(float delay, string msg)
 	{
-		moveTo (getRealPosition (), delay, msg);
+		moveTo (GetRealPosition (), delay, msg);
 	}
 
 	public void dieWithDelay(float delay)
 	{
 		m_delay = delay;
 		m_needDie = true;
+		GameObject effect = GameController.Instance.destroyEffect;
+		Vector3 pos = transform.position;
+		pos.z = -5;
+		m_effect = Instantiate(effect, pos, Quaternion.identity) as GameObject;
 	}
 
 	public void destroy()
@@ -259,6 +264,13 @@ public class Coin : MonoBehaviour
 
 		GetComponent<SpriteRenderer>().enabled = false;
 		GetComponent<BoxCollider2D>().enabled = false;
+
+		if ( m_effect != null )
+		{
+			Destroy(m_effect);
+
+			m_effect = null;
+		}
 	}
 
 	void Update()

@@ -13,9 +13,12 @@ public enum NeighbourPos
 	Count 	= 4 
 }
 
-public class Cell
+public class Cell : MonoBehaviour
 {
-	public Cell(int index, Point pos, bool empty)
+	public readonly float Width = 210;
+	public readonly float Height = 210;
+
+	public void Init(int index, Point pos, bool empty)
 	{
 		Index = index;
 		Position = pos;
@@ -24,42 +27,22 @@ public class Cell
 		Neighbours = new Cell[(int)NeighbourPos.Count];
 	}
 
-	public int Index
-	{
-		get { return m_index; }
-		private set { m_index = value; }
-	}
+	public int Index { get; private set; }
 
-	public Point Position
-	{
-		get { return m_position; }
-		private set { m_position = value; }
-	}
+	public Point Position { get; private set; }
 
-	public bool Empty
-	{
-		get { return m_empty; }
-		set { m_empty = value; }
-	}
+	public bool Empty { get; set; }
 
-	public Coin CoinRef
-	{
-		get { return m_coin; }
-		set { m_coin = value; }
-	}
+	public Coin CoinRef { get; set; }
 
-	public void setNeighbour(NeighbourPos pos, Cell nb)
+	public void SetNeighbour(NeighbourPos pos, Cell nb)
 	{
 		Neighbours [(int)pos] = nb; 
 	}
 
-	public Cell[] Neighbours
-	{
-		get { return m_neighbours; }
-		private set { m_neighbours = value; }
-	}
+	public Cell[] Neighbours { get; private set; }
 
-	public int getCoinCount (NeighbourPos pos)
+	public int GetCoinCount (NeighbourPos pos)
 	{
 		if (Empty)
 		{
@@ -78,7 +61,7 @@ public class Cell
 			    nb.CoinRef != null &&
 			    nb.CoinRef.CoinId == CoinRef.CoinId)
 			{
-				return nb.getCoinCount(pos) + 1;
+				return nb.GetCoinCount(pos) + 1;
 			}
 		}
 		catch(Exception exc)
@@ -88,10 +71,4 @@ public class Cell
 
 		return 0;
 	}
-
-	private Cell[] 	m_neighbours;
-	private int 	m_index;
-	private Point 	m_position;
-	private Coin 	m_coin;
-	private bool 	m_empty;
 }

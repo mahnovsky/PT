@@ -3,64 +3,46 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Xml;
 
-public class GameStrategy
-{
-	public GameStrategy(Map map)
-	{
-		m_map = map;
-	}
-
-	public virtual Coin coinForIndex(bool init, int index)
-	{
-		return m_map.createRandomCoin (index);
-	}
-
-	public virtual void onCoinsSwap (Coin c1, Coin c2) {}
-
-	public virtual void onCoinMove (Coin c) {}
-
-	public virtual void onMatch(int cid, int count) {}
-
-	public Map GameMap
-	{
-		get { return m_map; }
-	}
-
-	private Map m_map;
-}
-
 public class Map : MonoBehaviour
 {
-	public GameController controller;
-	public Coin coinPrefab;
-	public int width;
-	public int height;
-	public ActionManager actionMng;
-	public float dropSpeed;
-	public float swapSpeed;
+	public Cell				cellPrefab;
+	public Coin				coinPrefab;
+	public float			dropSpeed;
+	public float			swapSpeed;
+	public int Width { get; private set; }
+	public int Height { get; private set; }
 
-	public Vector3 getContentSize()
-	{
-		return m_contentSize;
-	}
+	// private section
+	private Cell[]		m_greed;
+	private Coin 		m_selected;
+	private float 		m_dieDelay = 1.2f;
+	private int 		m_blockCount = 0;
+	private Vector3		m_spawnPosition;
+	private Level 		m_currLevel;
+	private Vector2		m_size;
 
 	// Use this for initialization
-	void Awake ()
-	{
-		initialize (width, height);
+
+	public Vector3 GetRealPosition(int x, int y)
+	{	
+		Vector3 offset = new Vector3 (CoinOffset.x, CoinOffset.y);
+
+		Vector3 pos = new Vector3 ((Coin.coinWidth + Coin.border / 2) * x, (Coin.coinHeight + Coin.border / 2) * y);
+
+		return pos;
 	}
 
-	Cell getCell(int x, int y)
+	Cell GetCell(int x, int y)
 	{
 		if (x < 0 || y < 0 || x >= Width || y >= Height)
 		{
 			return null;
 		}
 
-		return getCell(posToIndex(x, y));
+		return GetCell(posToIndex(x, y));
 	}
 
-	Cell getCell(int index)
+	Cell GetCell(int index)
 	{
 		if (index >= 0 && index < Greed.Length)
 		{
@@ -70,35 +52,55 @@ public class Map : MonoBehaviour
 		return null;
 	}
 
-	void createGreed()
+	void CreateGreed()
 	{
 		Greed = new Cell[Count];
 
 		for (int i = 0; i < Count; ++i)
 		{
-			Greed[i] = new Cell(i, indexToPos(i), false);
+			var cell = Instantiate(cellPrefab);
+
+			Point pos = IndexToPos(i);
+
+			cell.Init(i, pos, false);
+
+			cell.transform.parent = transform;
+
+			cell.transform.localPosition = GetRealPosition(pos.X, pos.Y);
+
+			Greed[i] = cell;
 		}
 
 		for (int i = 0; i < Count; ++i)
 		{	
 			var cell = Greed[i];
 
-			cell.setNeighbour(NeighbourPos.Left, getCell(cell.Position.X - 1, cell.Position.Y));
-			cell.setNeighbour(NeighbourPos.Right, getCell(cell.Position.X + 1, cell.Position.Y));
-			cell.setNeighbour(NeighbourPos.Top, getCell(cell.Position.X, cell.Position.Y + 1));
-			cell.setNeighbour(NeighbourPos.Bottom, getCell(cell.Position.X, cell.Position.Y - 1));
+			cell.SetNeighbour(NeighbourPos.Left, GetCell(cell.Position.X - 1, cell.Position.Y));
+			cell.SetNeighbour(NeighbourPos.Right, GetCell(cell.Position.X + 1, cell.Position.Y));
+			cell.SetNeighbour(NeighbourPos.Top, GetCell(cell.Position.X, cell.Position.Y + 1));
+			cell.SetNeighbour(NeighbourPos.Bottom, GetCell(cell.Position.X, cell.Position.Y - 1));
 		}
 
-		foreach (Point pos in Level.currLevel().disabledCoins)
+		var disableCoins = GameController.CurrentLevel.DisabledCells;
+		if (disableCoins != null)
 		{
-			int index = posToIndex(pos);
+			foreach (Point pos in disableCoins)
+			{
+				int index = posToIndex(pos);
 
-			getCell (index).Empty = true;
+				var cell = GetCell(index);
+				if (cell != null)
+				{
+					cell.Empty = true;
+
+					cell.gameObject.SetActive(false);
+				}
+			}
 		}
 	}
 
 	//public section
-	public void initialize(int w, int h)
+	public void Initialize(int w, int h)
 	{
 		print ("map init w, h: " + w + ", " + h);
 
@@ -106,76 +108,45 @@ public class Map : MonoBehaviour
 		float realCoinH = Coin.coinHeight + Coin.border;
 
 		m_size = new Vector2 (w * realCoinW, h * realCoinH);
+		Width = w;
+		Height = h;
+		Count = w * h;
 
-		m_count = w * h;
+		GameController.Instance.InitLevel ();
 
-		controller.initLevel ();
+		m_currLevel = GameController.CurrentLevel;
 
-		m_currLevel = controller.CurrentLevel;
+		RemoveList = new List<Coin> ();
 
-		m_removed = new List<Coin> ();
-
-		createGreed ();
-
-		if (m_currLevel != null)
-		{
-			Strategy = m_currLevel.getStrategy (this);
-		}
-		else
-		{
-			Strategy = new GameStrategy(this);
-		}
-
+		CreateGreed ();
 
 		m_spawnPosition.y = SceneTransform.getHeightInUnits ();
 		m_spawnPosition.x = 0;
 
 		fill (true);
-
-		if (m_currLevel.LevelMode == Level.Mode.MoveItem)
-		{
-			MoveItemLevel mil = m_currLevel as MoveItemLevel;
-			int index = posToIndex(mil.topInX, h - 1);
-
-			removeCoin(index, true);
-			
-			createCoin(posToIndex(mil.topInX, h - 1), m_currLevel.maxCoinsCount() + 1, mil.item);
-		}
 		
 		float hw = (m_size.x / 2f) - (realCoinW / 2f);
 		float hh = (m_size.y / 2f) - (realCoinH / 2f);
 		
 		transform.localPosition = new Vector2(-hw, -hh);
 	}
-	
-	public int Width
-	{
-		get { return width; }
-	}
-	
-	public int Height
-	{
-		get { return height; }
-	}
-	
-	public int Count
-	{
-		get { return m_count; }
-	}
-	
+
+	public int Count { get; private set; }
+
 	public Coin getCoin(int x, int y)
 	{
-		return getCell (posToIndex (x, y)).CoinRef;
+		return GetCell (posToIndex (x, y)).CoinRef;
 	}
 
 	public Coin getCoin(int index)
 	{
-		return getCell(index).CoinRef;
+		return GetCell(index).CoinRef;
 	}
 
 	public int posToIndex(int x, int y)
 	{
-		if (x < 0 || y < 0 || x >= Width || y >= Height) {
+		if (x < 0 || y < 0 || x >= Width || y >= Height)
+		{
 			return -1;
 		}
 
@@ -187,7 +158,7 @@ public class Map : MonoBehaviour
 		return posToIndex(pos.X, pos.Y);
 	}
 
-	public Point indexToPos(int index)
+	public Point IndexToPos(int index)
 	{
 		return new Point (index % Width, index / Width);
 	}
@@ -204,16 +175,7 @@ public class Map : MonoBehaviour
 		set { m_blockCount = value; }
 	}
 
-	public GameStrategy Strategy
-	{
-		get { return m_strategy; }
-		set { m_strategy = value; }
-	}
-
-	public List<Coin> RemoveList
-	{
-		get { return m_removed; }
-	}
+	public List<Coin> RemoveList { get; private set; }
 
 	public Cell[] Greed
 	{
@@ -232,13 +194,13 @@ public class Map : MonoBehaviour
 
 		--m_blockCount;
 
-		Strategy.onCoinMove(coin);
+		m_currLevel.OnCoinMove(coin);
 
-		getCell(coin.PlaceId).CoinRef = coin;
+		GetCell(coin.PlaceId).CoinRef = coin;
 
 		if(msg == "failSwap")
 		{		
-			coin.moveToSpeedBased(coin.getRealPosition(), swapSpeed, "doneFailSwap");
+			coin.moveToSpeedBased(coin.GetRealPosition(), swapSpeed, "doneFailSwap");
 		}
 		else if (Blocked < 1 && msg != "doneFailSwap")
 		{
@@ -257,8 +219,8 @@ public class Map : MonoBehaviour
 			print ("create move coins");
 			//Coin cid = c1.PlaceId < c2.PlaceId ? c1 : c2;
 
-			c1.moveToSpeedBased(c1.getRealPosition(), swapSpeed, "");
-			c2.moveToSpeedBased(c2.getRealPosition(), swapSpeed, "");
+			c1.moveToSpeedBased(c1.GetRealPosition(), swapSpeed, "");
+			c2.moveToSpeedBased(c2.GetRealPosition(), swapSpeed, "");
 		}
 		else
 		{
@@ -274,8 +236,8 @@ public class Map : MonoBehaviour
 	{
 		Select = null;
 
-		getCell (c1.PlaceId).CoinRef = c2;
-		getCell (c2.PlaceId).CoinRef = c1;
+		GetCell (c1.PlaceId).CoinRef = c2;
+		GetCell (c2.PlaceId).CoinRef = c1;
 
 		bool res = false;
 
@@ -291,8 +253,8 @@ public class Map : MonoBehaviour
 			res = true;
 		}
 
-		getCell (c1.PlaceId).CoinRef = c1;
-		getCell (c2.PlaceId).CoinRef = c2;
+		GetCell (c1.PlaceId).CoinRef = c1;
+		GetCell (c2.PlaceId).CoinRef = c2;
 
 		return res;
 	}
@@ -303,14 +265,14 @@ public class Map : MonoBehaviour
 		c1.updateLoc (c2.PlaceId, c2.XPos, c2.YPos);
 		c2.updateLoc (posToIndex (pos.X, pos.Y), pos.X, pos.Y);
 
-		Strategy.onCoinsSwap (c1, c2);
+		m_currLevel.OnCoinsSwap (c1, c2);
 	}
 
 	public Coin createRandomCoin(int placeId)
 	{
 		print ("[Map:createRandomCoin]");
 
-		int maxCoin = Level.currLevel () == null ? 8 : Level.currLevel().maxCoinsCount ();
+		int maxCoin = GameController.CoinSprites.Length;
 
 		int rndCoin = UnityEngine.Random.Range (0, maxCoin);
 
@@ -319,23 +281,22 @@ public class Map : MonoBehaviour
 
 	public Coin createCoin(int placeId, int coinId, Sprite sp)
 	{
-		if (getCell (placeId).Empty)
+		if (GetCell (placeId).Empty)
 		{
 			return null;
 		}
 
-		Point pos = indexToPos(placeId);
+		Point pos = IndexToPos(placeId);
 		
 		Coin coin = null;
-		if (m_removed.Count > 0)
+		if (RemoveList.Count > 0)
 		{	
-			coin = m_removed[m_removed.Count - 1];
+			coin = RemoveList[RemoveList.Count - 1];
 			
-			if(!m_removed.Remove(coin) )
+			if(!RemoveList.Remove(coin) )
 			{
 				Debug.Log("Failed remove coin from remove list");
-			}
-			
+			}	
 		}
 		else
 		{
@@ -345,20 +306,20 @@ public class Map : MonoBehaviour
 		coin.transform.parent = transform;
 		if (sp == null)
 		{
-			sp = Level.currLevel ().coinSprites [coinId];
+			sp = GameController.CoinSprites [coinId];
 		}
 
 		coin.init (placeId, pos.X, pos.Y, coinId, sp);
 
-		getCell(placeId).CoinRef = coin;
+		GetCell(placeId).CoinRef = coin;
 		
 		return coin;
 	}
 
 	bool swapCoins(int index1, int index2)
 	{
-		Cell cell1 = getCell (index1);
-		Cell cell2 = getCell (index2);
+		Cell cell1 = GetCell (index1);
+		Cell cell2 = GetCell (index2);
 
 		if (cell1.Empty || cell2.Empty)
 		{
@@ -381,7 +342,7 @@ public class Map : MonoBehaviour
 		while(ny < Height)
 		{ 
 			int nid = posToIndex(x, ny);
-			Cell cell = getCell(nid);
+			Cell cell = GetCell(nid);
 
 			if (cell.CoinRef != null && !cell.Empty)
 			{
@@ -402,7 +363,7 @@ public class Map : MonoBehaviour
 				{
 
 					coin.Delay = m_dieDelay;
-					coin.moveToSpeedBased(coin.getRealPosition(), dropSpeed, "drop");
+					coin.moveToSpeedBased(coin.GetRealPosition(), dropSpeed, "drop");
 				}
 
 				break;
@@ -418,7 +379,7 @@ public class Map : MonoBehaviour
 		int index = posToIndex(x, y);
 		bool update = false;
 
-		if (getCoin(x, y) == null && !getCell (index).Empty)
+		if (getCoin(x, y) == null && !GetCell (index).Empty)
 		{
 			int ny = moveCoinsDown(index, x, y, init);
 			
@@ -426,7 +387,7 @@ public class Map : MonoBehaviour
 			if (ny >= Height)
 			{
 				print ("create random coin");
-				Coin coin = Strategy.coinForIndex(init, index);
+				Coin coin = m_currLevel.CoinForIndex(init, index);
 
 				if(coin == null)
 				{
@@ -437,15 +398,15 @@ public class Map : MonoBehaviour
 				{
 					coin.Delay = m_dieDelay;
 					
-					coin.transform.localPosition = coin.getRealPosition() + m_spawnPosition;
+					coin.transform.localPosition = coin.GetRealPosition() + m_spawnPosition;
 					
-					coin.moveToSpeedBased(coin.getRealPosition(), dropSpeed, "drop");
+					coin.moveToSpeedBased(coin.GetRealPosition(), dropSpeed, "drop");
 				}
 				else
 				{
 					coin.State = eCoinState.Idle;
 					
-					getCell(coin.PlaceId).CoinRef = coin;
+					GetCell(coin.PlaceId).CoinRef = coin;
 				}
 				
 				update = true;
@@ -481,7 +442,7 @@ public class Map : MonoBehaviour
 		{
 			for (int i = 0; i < Count; ++i)
 			{
-				Cell cell = getCell(i);
+				Cell cell = GetCell(i);
 				if (cell.CoinRef != null)
 				{
 					cell.CoinRef.destroy();
@@ -501,13 +462,13 @@ public class Map : MonoBehaviour
 	
 	public Point countNearCoins(Point pos)
 	{
-		Cell cell = getCell (pos.X, pos.Y);
+		Cell cell = GetCell (pos.X, pos.Y);
 
-		int left = cell.getCoinCount (NeighbourPos.Left);
-		int right = cell.getCoinCount (NeighbourPos.Right);
+		int left = cell.GetCoinCount (NeighbourPos.Left);
+		int right = cell.GetCoinCount (NeighbourPos.Right);
 
-		int top = cell.getCoinCount (NeighbourPos.Top);
-		int bottom = cell.getCoinCount (NeighbourPos.Bottom);
+		int top = cell.GetCoinCount (NeighbourPos.Top);
+		int bottom = cell.GetCoinCount (NeighbourPos.Bottom);
 		
 		return new Point(left + right, top + bottom);
 	}
@@ -516,7 +477,7 @@ public class Map : MonoBehaviour
 	{
 		int index = posToIndex(x, y);
 
-		if (getCell (index).Empty)
+		if (GetCell (index).Empty)
 		{
 			return false;
 		}
@@ -540,29 +501,32 @@ public class Map : MonoBehaviour
 		List<Coin> match = new List<Coin>();
 		while (xstart >= 0 && markCoin(xstart, y, coinId))
 		{
-			match.Add(getCell(xstart, y).CoinRef);
-			xstart = xstart -1;
+			match.Add(GetCell(xstart, y).CoinRef);
 
 			if(countNearCoinVer(new Point(xstart, y)) > 1)
 			{
 				removeVerticalCoins(xstart, y, coinId);
 			}
+
+			--xstart;
 		}
 		
 		xstart = x + 1;
 		while (xstart < Width && markCoin(xstart, y, coinId))
 		{
-			match.Add(getCell(xstart, y).CoinRef);
-			xstart = xstart + 1;
+			match.Add(GetCell(xstart, y).CoinRef);
 
 			if(countNearCoinVer(new Point(xstart, y)) > 1)
 			{
 				removeVerticalCoins(xstart, y, coinId);
 			}
+
+			++xstart;
 		}
+
 		if (match.Count > 0)
 		{
-			Strategy.onMatch(match[0].CoinId, match.Count);
+			m_currLevel.OnMatch(coinId, match.Count);
 		}
 	}
 
@@ -572,38 +536,43 @@ public class Map : MonoBehaviour
 		int ystart = y - 1;
 		while (ystart >= 0 && markCoin(x, ystart, coinId))
 		{
-			match.Add(getCell(x, ystart).CoinRef);
-			ystart = ystart -1;
+			match.Add(GetCell(x, ystart).CoinRef);
 
 			if(countNearCoinHor(new Point(x, ystart)) > 1)
 			{
 				removeHorizontalCoins(x, ystart, coinId);
 			}
+
+			--ystart;
 		}
 		
 		ystart = y + 1;
 		while (ystart < Height && markCoin(x, ystart, coinId))
 		{
-			match.Add(getCell(x, ystart).CoinRef);
-			ystart = ystart + 1;
+			match.Add(GetCell(x, ystart).CoinRef);
 
 			if(countNearCoinHor(new Point(x, ystart)) > 1)
 			{
 				removeHorizontalCoins(x, ystart, coinId);
 			}
+
+			++ystart;
 		}
 
-		Strategy.onMatch (match [0].CoinId, match.Count);
+		if (match.Count > 0)
+		{
+			m_currLevel.OnMatch(match[0].CoinId, match.Count);
+		}
 	}
 
 	public int countNearCoinHor(Point pos)
 	{
-		Cell cell = getCell (pos.X, pos.Y);
+		Cell cell = GetCell (pos.X, pos.Y);
 
 		if (cell != null)
 		{
-			int left = cell.getCoinCount (NeighbourPos.Left);
-			int right = cell.getCoinCount (NeighbourPos.Right);
+			int left = cell.GetCoinCount (NeighbourPos.Left);
+			int right = cell.GetCoinCount (NeighbourPos.Right);
 		
 			return left + right;
 		}
@@ -613,12 +582,12 @@ public class Map : MonoBehaviour
 
 	public int countNearCoinVer(Point pos)
 	{
-		Cell cell = getCell (pos.X, pos.Y);
+		Cell cell = GetCell (pos.X, pos.Y);
 
 		if (cell != null)
 		{
-			int top = cell.getCoinCount (NeighbourPos.Top);
-			int bottom = cell.getCoinCount (NeighbourPos.Bottom);
+			int top = cell.GetCoinCount (NeighbourPos.Top);
+			int bottom = cell.GetCoinCount (NeighbourPos.Bottom);
 		
 			return top + bottom;
 		}
@@ -632,7 +601,7 @@ public class Map : MonoBehaviour
 	{
 		for (int i = Count - 1; i >= start; --i)
 		{
-			Cell cell = getCell(i);
+			Cell cell = GetCell(i);
 			if(cell.Empty)
 			{
 				continue;
@@ -663,7 +632,7 @@ public class Map : MonoBehaviour
 		int deletedCoins = 0;
 		for (int i = 0; i < Count; ++i )
 		{
-			Cell cell = getCell(i);
+			Cell cell = GetCell(i);
 			if (cell.CoinRef != null && cell.CoinRef.Deleted)
 			{ 
 				print ("[Coin:checkAll] remove coin: " + i);
@@ -675,7 +644,8 @@ public class Map : MonoBehaviour
 		
 		fill(init);	
 	}
-	
+
+	private GameObject m_lighting;
 	public void removeCoin(int ind, bool init)
 	{
 		Coin picked = getCoin(ind);
@@ -689,6 +659,12 @@ public class Map : MonoBehaviour
 			else
 			{
 				picked.dieWithDelay(m_dieDelay);
+
+				if ( m_lighting == null )
+				{
+					m_lighting = Instantiate(GameController.Instance.lighting);
+				}
+
 			} 
 		} 
 	}
@@ -697,11 +673,11 @@ public class Map : MonoBehaviour
 	{
 		for (int i = 0; i < Count; ++i)
 		{
-			Point pos = indexToPos(i);
+			Point pos = IndexToPos(i);
 			
 			if (pos.X > 0)
 			{
-				if (checkPicksOnlyStart(getCoin(i), getCoin(pos.X - 1, pos.Y)) )
+				if (CheckPicksOnlyStart(getCoin(i), getCoin(pos.X - 1, pos.Y)) )
 				{
 					return i;
 				}
@@ -709,7 +685,7 @@ public class Map : MonoBehaviour
 			
 			if (pos.Y > 0)
 			{
-				if (checkPicksOnlyStart(getCoin(i), getCoin(pos.X, pos.Y-1)))
+				if (CheckPicksOnlyStart(getCoin(i), getCoin(pos.X, pos.Y-1)))
 				{
 					return i;
 				}
@@ -717,7 +693,7 @@ public class Map : MonoBehaviour
 			
 			if (pos.X + 1 < Width)
 			{
-				if (checkPicksOnlyStart(getCoin(i), getCoin(pos.X+1, pos.Y)))
+				if (CheckPicksOnlyStart(getCoin(i), getCoin(pos.X+1, pos.Y)))
 				{
 					return i;
 				}
@@ -725,7 +701,7 @@ public class Map : MonoBehaviour
 			
 			if (pos.Y + 1 < Height)
 			{
-				if (checkPicksOnlyStart(getCoin(i), getCoin(pos.X, pos.Y+1)))
+				if (CheckPicksOnlyStart(getCoin(i), getCoin(pos.X, pos.Y+1)))
 				{
 					return i;
 				}
@@ -735,7 +711,7 @@ public class Map : MonoBehaviour
 		return -1;
 	}
 	
-	public bool checkPicksOnlyStart(Coin startpick, Coin endpick)
+	public bool CheckPicksOnlyStart(Coin startpick, Coin endpick)
 	{
 		if (startpick == null || endpick == null)
 		{
@@ -749,19 +725,4 @@ public class Map : MonoBehaviour
 	{
 		get { return m_size / 2; }
 	}
-
-	
-	// private section
-	private List<Coin> m_removed;
-	private Cell[] m_greed;
-	private int 	m_count;
-	private Coin 	m_selected;
-	private float 	m_dieDelay = 0.5f;
-	private int 	m_blockCount = 0;
-	private DelegateAction m_currDelay;
-	private Vector3 m_spawnPosition;
-	private Level 	m_currLevel;
-	private GameStrategy m_strategy;	
-	private Vector3 m_contentSize;
-	Vector2 m_size;
 }

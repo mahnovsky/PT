@@ -4,37 +4,59 @@ using System.Collections;
 
 public class GameController : MonoBehaviour
 {
-	public Map map;
-	public Pointf designSize;
+	public Map				map;
+	public Pointf			designSize;
+	public GameObject		destroyEffect;
+	public GameObject		lighting;
+	public Sprite[]			coinSprites;
+
+	public bool				enableCheats	= true;
+	public GameObject		levelEndPanel;
+
+	GUIStyle				m_style;
+
+	string					m_mode;
+	string					m_levelNumStr;
+	bool					m_changeCoin	= false;
+	int						m_currentCoin	= 0;
+	private LevelLoader		m_levelLoader;
 
 	void Awake()
 	{
-		_inst = this;
+		if ( Instance != null )
+		{
+			Destroy(gameObject);
 
-		m_style = new GUIStyle ();
+			return;
+		}
 
-		m_style.fontSize = 16;
+		Instance = this;
 
-		m_mode = "Mode: " + m_currentLevel.LevelMode.ToString ();
+		map.Initialize(6, 8);
+		if (CurrentLevel != null)
+		{
+			m_style = new GUIStyle();
 
-		m_levelNumStr = "Level: " + m_levelNum.ToString ();
+			m_style.fontSize = 16;
+
+			m_mode = "Mode: " + CurrentLevel.LevelMode.ToString();
+
+			m_levelNumStr = "Level: " + LevelNum.ToString();
+		}
 
 		Camera.main.aspect = designSize.X / designSize.Y;
 	}
 
 	void OnGUI()
 	{
-		if (!Debug.isDebugBuild)
+		if (!Debug.isDebugBuild || CurrentLevel == null)
 		{
 			return;
 		}
 
 		GUI.Label (new Rect (0, 0, 100, 50), m_levelNumStr, m_style);
-
-		if (m_currentLevel != null)
-		{
-			GUI.Label (new Rect (0, 30, 100, 50), m_mode, m_style);
-		}
+		
+		GUI.Label (new Rect (0, 30, 100, 50), m_mode, m_style);
 
 		if (!enableCheats)
 		{
@@ -47,10 +69,10 @@ public class GameController : MonoBehaviour
 			m_changeCoin = !m_changeCoin;
 		}
 
-		Texture texture = CurrentLevel.coinSprites [m_currentCoin].texture;
+		Texture texture = GameController.CoinSprites [m_currentCoin].texture;
 		if (GUI.Button (new Rect (0, 80, 100, 50), texture))
 		{
-			int max = CurrentLevel.coinSprites.Length;
+			int max = GameController.CoinSprites.Length;
 			if(m_currentCoin  + 1 < max)
 			{
 				++m_currentCoin;
@@ -62,32 +84,31 @@ public class GameController : MonoBehaviour
 		}
 	}
 
-	public void initLevel()
+	public void InitLevel()
 	{
-		m_currentLevel = null;
-
-		if (m_levelNum <= 0)
+		if ( m_levelLoader == null )
 		{
-			m_levelNum = 1;
+			m_levelLoader = new LevelLoader();
 		}
 
-		Object res = Resources.Load ("Level_" + m_levelNum);
-		GameObject currentLevel = res as GameObject;
-		m_currentLevel = currentLevel.GetComponent<Level> ();
+		if (LevelNum <= 0)
+		{
+			LevelNum = 1;
+		}
 
-		m_currentLevel.init ();
+		if ( CurrentLevel != null && LevelNum == CurrentLevel.Number )
+		{
+			return;
+		}
+
+		CurrentLevel = m_levelLoader.Load( LevelNum );
+
+		CurrentLevel.Init ();
 	}
 
-	public static int LevelNum
-	{
-		get { return m_levelNum; }
-		set { m_levelNum = value; }
-	}
+	public static int LevelNum { get; set; }
 
-	public Level CurrentLevel
-	{
-		get { return m_currentLevel; }
-	}
+	public static Level CurrentLevel { get; private set; }
 
 	public void OnCoinTap(Coin c)
 	{
@@ -109,7 +130,6 @@ public class GameController : MonoBehaviour
 
 	public void OnLevelEnd()
 	{
-		
 		levelEndPanel.SetActive (true);
 	}
 
@@ -124,22 +144,10 @@ public class GameController : MonoBehaviour
 		Application.LoadLevel ("Game");
 	}
 
-	public static GameController Instance
+	public static GameController Instance { get; private set; }
+
+	public static Sprite[] CoinSprites
 	{
-		get { return _inst; }
+		get { return Instance.coinSprites; }
 	}
-
-	public bool enableCheats = true;
-	public GameObject levelEndPanel;
-
-	private static int m_levelNum;
-	private Level m_currentLevel;
-	GUIStyle m_style;
-
-	string m_mode;
-	string m_levelNumStr;
-	bool m_changeCoin = false;
-	int m_currentCoin = 0;
-
-	static GameController _inst;
 }

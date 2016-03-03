@@ -2,59 +2,42 @@ using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 
-public class ClassicStrategy : GameStrategy {
-	public ClassicStrategy(Map map, int [] matches) 
-	: base(map) {
-		m_matchesCount = matches;
-	}
-	
-	public override Coin coinForIndex(bool init, int index) {
-		
-		return GameMap.createRandomCoin (index);
+public class ClassicLevel : Level
+{
+	private int m_moveCount;
+
+	public ClassicLevel()
+		:base()
+	{
 	}
 
-	public override void onMatch(int cid, int count) {
+	public override void Init()
+	{
+		LevelMode = Mode.Classic;
 
-		if (cid > m_matchesCount.Length || cid < 0) {
-			return;
-		}
+		m_moveCount = 10;
+	}
 
-		if (m_matchesCount [cid] > 0) {
-			--m_matchesCount [cid];
-		}
+	public override  Coin CoinForIndex(bool init, int index)
+	{	
+		return GameController.CurrentLevel.CreateRandomCoin (index);
+	}
 
-		bool done = false;
-		foreach (int index in m_matchesCount) {
-			if (index > 0) {
-				done = true;
-				break;
-			}
-		}
+	public override void OnMatch(int cid, int count)
+	{
+		--m_moveCount;
 
-		if (!done) {
+		if (m_moveCount <= 0)
+		{
 			GameController.Instance.OnLevelEnd();
 		}
-	} 
-
-	int [] m_matchesCount;
-}
-
-public class ClassicLevel : Level {
-
-
-	public int matchesCount = 2;
-
-	public override void init() {
-		LevelMode = Mode.Classic;
 	}
 
-	public override GameStrategy getStrategy(Map map) {
-
-		int [] coins = new int[coinSprites.Length];
-		for (int i = 0; i < coins.Length; ++i) {
-			coins[i] = matchesCount;
-		}
-
-		return new ClassicStrategy(map, coins);
+	public override void InitParser(JsonParser parser)
+	{
+		parser.AddFunc("moveCount", (s, o) =>
+		{
+			m_moveCount = (int)o.n;
+		});	
 	}
 }
