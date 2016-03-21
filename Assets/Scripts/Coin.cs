@@ -265,6 +265,13 @@ public class Coin : MonoBehaviour
 		GetComponent<SpriteRenderer>().enabled = false;
 		GetComponent<BoxCollider2D>().enabled = false;
 
+		if (m_move != null)
+		{
+			m_move.Kill();
+
+			m_move = null;
+		}
+
 		if ( m_effect != null )
 		{
 			Destroy(m_effect);

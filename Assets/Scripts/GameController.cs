@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
@@ -17,9 +18,13 @@ public class GameController : MonoBehaviour
 
 	string					m_mode;
 	string					m_levelNumStr;
-	bool					m_changeCoin	= false;
+	int						m_changeCoin = 0;
 	int						m_currentCoin	= 0;
 	private LevelLoader		m_levelLoader;
+	private LevelSaver		m_levelSaver;
+	private Sprite			m_currSprite;
+	private Texture2D m_texture;
+	private string m_number = "";
 
 	void Awake()
 	{
@@ -44,7 +49,8 @@ public class GameController : MonoBehaviour
 			m_levelNumStr = "Level: " + LevelNum.ToString();
 		}
 
-		Camera.main.aspect = designSize.X / designSize.Y;
+		if (!enableCheats)
+			Camera.main.aspect = designSize.X / designSize.Y;
 	}
 
 	void OnGUI()
@@ -63,14 +69,38 @@ public class GameController : MonoBehaviour
 			return;
 		}
 
-		string sw = m_changeCoin ? "Change Coin ON" : "Change Coin OFF";
+		string sw = "";
+		if (m_changeCoin == 0)
+			sw = "None";
+		else if (m_changeCoin == 1)
+			sw = "Change Coin ON";
+		else if (m_changeCoin == 2)
+			sw = "Remove cell";
+		else if (m_changeCoin == 3)
+			sw = "Curr level";
+		else if (m_changeCoin == 4)
+			sw = "Move count";
+
 		if (GUI.Button (new Rect (0, 30, 200, 50), sw))
 		{
-			m_changeCoin = !m_changeCoin;
+			++m_changeCoin;
+			if (m_changeCoin > 4)
+				m_changeCoin = 0;
+		}
+		
+		if (CoinSprites[m_currentCoin] != m_currSprite)
+		{
+			var sp = CoinSprites[m_currentCoin];
+			m_currSprite = sp;
+			
+			m_texture = new Texture2D((int)sp.rect.width, (int)sp.rect.height);
+
+			m_texture.SetPixels(sp.texture.GetPixels((int)sp.rect.x,(int)sp.rect.y, (int)sp.rect.width, (int)sp.rect.height));
+
+			m_texture.Apply();
 		}
 
-		Texture texture = GameController.CoinSprites [m_currentCoin].texture;
-		if (GUI.Button (new Rect (0, 80, 100, 50), texture))
+		if (GUI.Button (new Rect (0, 80, 100, 50), m_texture))
 		{
 			int max = GameController.CoinSprites.Length;
 			if(m_currentCoin  + 1 < max)
@@ -82,6 +112,38 @@ public class GameController : MonoBehaviour
 				m_currentCoin = 0;
 			}
 		}
+
+		if (GUI.Button(new Rect(0, 130, 100, 50), "save"))
+		{
+			SaveLevel();
+		}
+
+		string num = GUI.TextField(new Rect(0, 180, 100, 50), m_number);
+		if (String.IsNullOrEmpty(num) || m_number == num)
+			return;
+
+		m_number = num;
+		int p = Int32.Parse(num);
+
+		if (p > 0)
+		{
+			ClassicLevel cl = CurrentLevel as ClassicLevel;
+			
+			if (m_changeCoin == 3 && p != CurrentLevel.Number)
+				CurrentLevel.Number = p;
+			else if (cl != null && m_changeCoin == 4 && p != cl.MaxMoveCount)
+				cl.MaxMoveCount = p;
+		}
+	}
+
+	public void SaveLevel( )
+	{
+		if ( m_levelSaver == null )
+		{
+			m_levelSaver = new LevelSaver();
+		}
+
+		m_levelSaver.SaveLevel(CurrentLevel);
 	}
 
 	public void InitLevel()
@@ -98,6 +160,7 @@ public class GameController : MonoBehaviour
 
 		if ( CurrentLevel != null && LevelNum == CurrentLevel.Number )
 		{
+			CurrentLevel.Refresh();
 			return;
 		}
 
@@ -112,9 +175,15 @@ public class GameController : MonoBehaviour
 
 	public void OnCoinTap(Coin c)
 	{
-		if (m_changeCoin)
+		if (m_changeCoin == 1)
 		{
 			c.changeCoinId (m_currentCoin);
+		}
+		else if (m_changeCoin == 2)
+		{
+			CurrentLevel.DisabledCells.Add(new Point(c.XPos, c.YPos));
+
+			map.Refresh();
 		}
 	}
 

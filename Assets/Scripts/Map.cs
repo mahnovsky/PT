@@ -32,7 +32,7 @@ public class Map : MonoBehaviour
 		return pos;
 	}
 
-	Cell GetCell(int x, int y)
+	public Cell GetCell(int x, int y)
 	{
 		if (x < 0 || y < 0 || x >= Width || y >= Height)
 		{
@@ -42,7 +42,7 @@ public class Map : MonoBehaviour
 		return GetCell(posToIndex(x, y));
 	}
 
-	Cell GetCell(int index)
+	public Cell GetCell(int index)
 	{
 		if (index >= 0 && index < Greed.Length)
 		{
@@ -129,6 +129,32 @@ public class Map : MonoBehaviour
 		float hh = (m_size.y / 2f) - (realCoinH / 2f);
 		
 		transform.localPosition = new Vector2(-hw, -hh);
+	}
+
+	public void Refresh()
+	{
+		var disableCoins = GameController.CurrentLevel.DisabledCells;
+		if (disableCoins != null)
+		{
+			foreach (Point pos in disableCoins)
+			{
+				int index = posToIndex(pos);
+
+				var cell = GetCell(index);
+				if (cell != null)
+				{
+					cell.Empty = true;
+					var coin = getCoin(cell.Index);
+					if (coin != null)
+					{
+						coin.Deleted = true;
+						coin.gameObject.SetActive(false);
+					}
+
+					cell.gameObject.SetActive(false);
+				}
+			}
+		}
 	}
 
 	public int Count { get; private set; }
@@ -437,15 +463,16 @@ public class Map : MonoBehaviour
 		{
 			checkAll(init, 0);
 		}
-		
+
 		while (isNextHelp() == -1)
 		{
 			for (int i = 0; i < Count; ++i)
 			{
 				Cell cell = GetCell(i);
-				if (cell.CoinRef != null)
+				var coin = getCoin(cell.Index);
+				if (coin != null)
 				{
-					cell.CoinRef.destroy();
+					coin.destroy();
 
 					cell.CoinRef = null;
 				}
@@ -640,6 +667,11 @@ public class Map : MonoBehaviour
 				removeCoin(i, init);
 				cell.CoinRef = null;
 			}
+		}
+
+		if ( deletedCoins == 0 )
+		{
+			GameController.CurrentLevel.OnBoardStable();
 		}
 		
 		fill(init);	

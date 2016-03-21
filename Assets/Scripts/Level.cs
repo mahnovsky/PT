@@ -7,7 +7,7 @@ using System.Security.Cryptography.X509Certificates;
 using UnityEngine.Assertions;
 using UnityEngine.UI;
 
-public class Level : MonoBehaviour
+public class Level
 {
 	public enum Mode
 	{
@@ -26,8 +26,13 @@ public class Level : MonoBehaviour
 	}
 
 	public virtual  void Init( )
-	{
-	}
+	{}
+
+	public virtual void Refresh()
+	{ }
+
+	public virtual void OnBoardStable( )
+	{ }
 
 	public virtual Coin CoinForIndex(bool init, int index)
 	{
@@ -84,7 +89,30 @@ public class Level : MonoBehaviour
 	}
 
 	public virtual void InitParser(JsonParser parser)
+	{}
+
+	protected virtual void SaveInherit(JSONObject root)
+	{}
+
+	public void Save( JSONObject root )
 	{
-		
+		JSONObject level = new JSONObject(JSONObject.Type.OBJECT);
+		JSONObject dc = new JSONObject(JSONObject.Type.ARRAY);
+
+		foreach (var disabledCell in DisabledCells)
+		{
+			var point = new JSONObject(JSONObject.Type.OBJECT);
+
+			point.AddField("x", disabledCell.X);
+			point.AddField("y", disabledCell.Y);
+
+			dc.Add(point);
+		}
+
+		level.AddField("disabledCells", dc);
+
+		SaveInherit( level );
+
+		root.AddField("level", level);
 	}
 }

@@ -4,18 +4,14 @@ using System.Collections.Generic;
 
 public class ClassicLevel : Level
 {
-	private int m_moveCount;
-
-	public ClassicLevel()
-		:base()
-	{
-	}
+	public int MaxMoveCount { get; set; }
+	public int MoveCount { get; set; }
 
 	public override void Init()
 	{
 		LevelMode = Mode.Classic;
 
-		m_moveCount = 10;
+		MoveCount = 10;
 	}
 
 	public override  Coin CoinForIndex(bool init, int index)
@@ -25,19 +21,33 @@ public class ClassicLevel : Level
 
 	public override void OnMatch(int cid, int count)
 	{
-		--m_moveCount;
+		--MoveCount;
+	}
 
-		if (m_moveCount <= 0)
+	public override void OnBoardStable( )
+	{
+		if ( MoveCount <= 0 )
 		{
-			GameController.Instance.OnLevelEnd();
+			GameController.Instance.OnLevelEnd ( );
 		}
+	}
+
+	public override void Refresh()
+	{
+		MoveCount = MaxMoveCount;
 	}
 
 	public override void InitParser(JsonParser parser)
 	{
 		parser.AddFunc("moveCount", (s, o) =>
 		{
-			m_moveCount = (int)o.n;
+			MaxMoveCount = (int)o.n;
+			Refresh();
 		});	
+	}
+
+	protected override void SaveInherit(JSONObject root)
+	{
+		root.AddField("moveCount", MaxMoveCount);
 	}
 }
