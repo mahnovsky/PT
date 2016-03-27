@@ -17,6 +17,8 @@ public class Level
 
 	public List<Point> DisabledCells { get; set; }
 	public int Number { get; set; }
+	public int Score { get; protected set; }
+	public Action<int> OnScoreUpdate { get; set; }
 
 	public Mode LevelMode { get; protected set; }
 
@@ -29,7 +31,9 @@ public class Level
 	{}
 
 	public virtual void Refresh()
-	{ }
+	{
+		Score = 0;
+	}
 
 	public virtual void OnBoardStable( )
 	{ }
@@ -46,7 +50,12 @@ public class Level
 	{ }
 
 	public virtual void OnMatch(int cid, int count)
-	{ }
+	{ 
+		Score += (5 * count);
+
+		if (OnScoreUpdate != null)
+			OnScoreUpdate.Invoke (Score);
+	}
 
 	public Coin CreateRandomCoin( int index )
 	{

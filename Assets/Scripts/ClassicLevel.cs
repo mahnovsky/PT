@@ -10,22 +10,23 @@ public class ClassicLevel : Level
 	public override void Init()
 	{
 		LevelMode = Mode.Classic;
-
-		MoveCount = 10;
 	}
 
 	public override  Coin CoinForIndex(bool init, int index)
 	{	
-		return GameController.CurrentLevel.CreateRandomCoin (index);
+		return base.CreateRandomCoin (index);
 	}
 
-	public override void OnMatch(int cid, int count)
+	public override void OnCoinsSwap(Coin c1, Coin c2)
 	{
+		base.OnCoinsSwap (c1, c2);
+
 		--MoveCount;
 	}
 
 	public override void OnBoardStable( )
 	{
+		Debug.Log ("OnBoardStable mc / maxmc: " + MoveCount + " / " + MaxMoveCount);
 		if ( MoveCount <= 0 )
 		{
 			GameController.Instance.OnLevelEnd ( );
@@ -34,6 +35,8 @@ public class ClassicLevel : Level
 
 	public override void Refresh()
 	{
+		base.Refresh ();
+
 		MoveCount = MaxMoveCount;
 	}
 

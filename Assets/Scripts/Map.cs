@@ -127,7 +127,15 @@ public class Map : MonoBehaviour
 		
 		float hw = (m_size.x / 2f) - (realCoinW / 2f);
 		float hh = (m_size.y / 2f) - (realCoinH / 2f);
-		
+
+		float halfH = SceneTransform.getHeightInUnits () / 2;
+		float delta = halfH - (m_size.y / 2f);
+
+		if (delta > 0) 
+		{
+			hh += (delta * 0.9f);
+		}
+
 		transform.localPosition = new Vector2(-hw, -hh);
 	}
 
@@ -553,7 +561,7 @@ public class Map : MonoBehaviour
 
 		if (match.Count > 0)
 		{
-			m_currLevel.OnMatch(coinId, match.Count);
+			m_currLevel.OnMatch(coinId, match.Count + 1);
 		}
 	}
 
@@ -649,11 +657,6 @@ public class Map : MonoBehaviour
 				markCoin(cell.Position.X, cell.Position.Y, idc);
 				removeVerticalCoins(cell.Position.X, cell.Position.Y, idc);
 			}
-
-			if (hcount > 1 || vcount > 1)
-			{
-				break;
-			}
 		}
 		
 		int deletedCoins = 0;
@@ -669,12 +672,11 @@ public class Map : MonoBehaviour
 			}
 		}
 
-		if ( deletedCoins == 0 )
-		{
-			GameController.CurrentLevel.OnBoardStable();
+		if (deletedCoins == 0) {
+			GameController.CurrentLevel.OnBoardStable ();
+		} else {
+			fill (init);	
 		}
-		
-		fill(init);	
 	}
 
 	private GameObject m_lighting;
@@ -694,9 +696,8 @@ public class Map : MonoBehaviour
 
 				if ( m_lighting == null )
 				{
-					m_lighting = Instantiate(GameController.Instance.lighting);
+					//m_lighting = Instantiate(GameController.Instance.lighting);
 				}
-
 			} 
 		} 
 	}

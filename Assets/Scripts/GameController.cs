@@ -13,6 +13,7 @@ public class GameController : MonoBehaviour
 
 	public bool				enableCheats	= true;
 	public GameObject		levelEndPanel;
+	public GameObject 		shadow;
 
 	GUIStyle				m_style;
 
@@ -59,11 +60,11 @@ public class GameController : MonoBehaviour
 		{
 			return;
 		}
-
+		/*
 		GUI.Label (new Rect (0, 0, 100, 50), m_levelNumStr, m_style);
 		
 		GUI.Label (new Rect (0, 30, 100, 50), m_mode, m_style);
-
+		*/
 		if (!enableCheats)
 		{
 			return;
@@ -200,6 +201,7 @@ public class GameController : MonoBehaviour
 	public void OnLevelEnd()
 	{
 		levelEndPanel.SetActive (true);
+		shadow.SetActive (true);
 	}
 
 	public void OnRepeatLevelBtn()

@@ -6,7 +6,7 @@
     <ProductVersion>10.0.20506</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
     <RootNamespace></RootNamespace>
-    <ProjectGuid>{979B4682-B75C-7CD2-544C-5FEAB5171EA4}</ProjectGuid>
+    <ProjectGuid>{C73A5B92-2ABA-04FF-D880-E679FEC769D1}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <AssemblyName>Assembly-CSharp</AssemblyName>
@@ -45,21 +45,39 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-     <Compile Include="Assets\Scripts\ActionManager.cs" />
+     <Compile Include="Assets\Electricity\Scripts\LightningBolt.cs" />
+     <Compile Include="Assets\JSON\JSONObject.cs" />
+     <Compile Include="Assets\JSON\JSONTemplates.cs" />
+     <Compile Include="Assets\JSON\VectorTemplates.cs" />
+     <Compile Include="Assets\Scripts\Cell.cs" />
      <Compile Include="Assets\Scripts\ClassicLevel.cs" />
      <Compile Include="Assets\Scripts\Coin.cs" />
+     <Compile Include="Assets\Scripts\Effect.cs" />
      <Compile Include="Assets\Scripts\Fps.cs" />
-     <Compile Include="Assets\Scripts\Game.cs" />
+     <Compile Include="Assets\Scripts\GameController.cs" />
+     <Compile Include="Assets\Scripts\JsonParser.cs" />
      <Compile Include="Assets\Scripts\Level.cs" />
+     <Compile Include="Assets\Scripts\LevelLoader.cs" />
+     <Compile Include="Assets\Scripts\LevelSaver.cs" />
      <Compile Include="Assets\Scripts\Map.cs" />
      <Compile Include="Assets\Scripts\MapButton.cs" />
+     <Compile Include="Assets\Scripts\Menu.cs" />
      <Compile Include="Assets\Scripts\MoveItemLevel.cs" />
      <Compile Include="Assets\Scripts\SceneTransform.cs" />
+     <Compile Include="Assets\Scripts\Utils\ActionManager.cs" />
+     <Compile Include="Assets\Scripts\Utils\Point.cs" />
+     <Compile Include="Assets\UITopPanel.cs" />
+     <None Include="Assets\JSON\readme.txt" />
+     <None Include="Assets\HOTween\readme.txt" />
+     <None Include="Assets\Electricity\Shaders\lightning.shader" />
  <Reference Include="UnityEngine.UI">
  <HintPath>/Applications/Unity/Unity.app/Contents/UnityExtensions/Unity/GUISystem/UnityEngine.UI.dll</HintPath>
  </Reference>
  <Reference Include="UnityEngine.Networking">
  <HintPath>/Applications/Unity/Unity.app/Contents/UnityExtensions/Unity/Networking/UnityEngine.Networking.dll</HintPath>
+ </Reference>
+ <Reference Include="HOTween">
+ <HintPath>/Users/Mahnovsky/Projects/PT/Assets/HOTween/Plugins/HOTween.dll</HintPath>
  </Reference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
