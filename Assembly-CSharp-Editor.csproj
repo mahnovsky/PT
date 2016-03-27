@@ -85,6 +85,9 @@
  <Reference Include="SyntaxTree.VisualStudio.Unity.Messaging">
  <HintPath>/Users/Mahnovsky/Projects/PT/Assets/UnityVS/Editor/SyntaxTree.VisualStudio.Unity.Messaging.dll</HintPath>
  </Reference>
+ <Reference Include="UnityVS.VersionSpecific">
+ <HintPath>/Users/Mahnovsky/Projects/PT/Assets/UnityVS/Editor/UnityVS.VersionSpecific.dll</HintPath>
+ </Reference>
  <Reference Include="UnityEditor.Graphs">
  <HintPath>/Applications/Unity/Unity.app/Contents/Frameworks/Managed/UnityEditor.Graphs.dll</HintPath>
  </Reference>
@@ -96,9 +99,6 @@
  </Reference>
  <Reference Include="UnityEditor.OSXStandalone.Extensions">
  <HintPath>/Applications/Unity/PlaybackEngines/MacStandaloneSupport/UnityEditor.OSXStandalone.Extensions.dll</HintPath>
- </Reference>
- <Reference Include="UnityVS.VersionSpecific">
- <HintPath>/Users/Mahnovsky/Projects/PT/Assets/UnityVS/Editor/UnityVS.VersionSpecific.dll</HintPath>
  </Reference>
   </ItemGroup>
   <ItemGroup>

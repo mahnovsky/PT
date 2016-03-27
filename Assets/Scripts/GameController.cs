@@ -2,6 +2,7 @@ using System;
 using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
+using UnityEngine.SceneManagement;
 
 public class GameController : MonoBehaviour
 {
@@ -13,7 +14,9 @@ public class GameController : MonoBehaviour
 
 	public bool				enableCheats	= true;
 	public GameObject		levelEndPanel;
+	public GameObject 		optionPanel;
 	public GameObject 		shadow;
+	private GameObject 		m_currentPanel;
 
 	GUIStyle				m_style;
 
@@ -190,12 +193,12 @@ public class GameController : MonoBehaviour
 
 	public void OnMenuButton()
 	{
-		Application.LoadLevel ("MainMenu");
+		SceneManager.LoadScene("MainMenu");
 	}
 
 	public void OnMapBtn()
 	{
-		Application.LoadLevel ("Map");
+		SceneManager.LoadScene("Map");
 	}
 
 	public void OnLevelEnd()
@@ -206,13 +209,31 @@ public class GameController : MonoBehaviour
 
 	public void OnRepeatLevelBtn()
 	{
-		Application.LoadLevel ("Game");
+		SceneManager.LoadScene("Game");
 	}
 
 	public void OnNextLevelBtn()
 	{
 		++LevelNum;
-		Application.LoadLevel ("Game");
+		SceneManager.LoadScene("Game");
+	}
+
+	public void OnOptionBtn()
+	{
+		optionPanel.SetActive (true);
+		shadow.SetActive (true);
+
+		m_currentPanel = optionPanel;
+	}
+
+	public void OnClose()
+	{
+		shadow.SetActive (false);
+		if (m_currentPanel != null) 
+		{
+			m_currentPanel.SetActive (false);
+			m_currentPanel = null;
+		}
 	}
 
 	public static GameController Instance { get; private set; }
