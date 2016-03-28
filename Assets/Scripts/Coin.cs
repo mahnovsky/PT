@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 using System.Collections;
 using Holoville.HOTween;
 
@@ -15,6 +16,8 @@ public class Coin : MonoBehaviour
 	public static float coinHeight	= 200f * 0.01f;
 	public static float border		= 5f * 0.01f;
 	private GameObject m_effect;
+
+	public GameObject selector;
 
 	public void init(int placeId, int x, int y, int coinId, Sprite sp)
 	{
@@ -86,11 +89,7 @@ public class Coin : MonoBehaviour
 	{
 		Map m = GameController.Instance.map;
 		
-		Vector3 offset = new Vector3 (m.CoinOffset.x, m.CoinOffset.y);
-
-		Vector3 pos = new Vector3 ((coinWidth + border / 2) * XPos, (coinHeight + border / 2) * YPos);
-
-		return pos;
+		return m.GetRealPosition(Position.X, Position.Y);
 	}
 
 	public void refreshPosition()
@@ -166,21 +165,42 @@ public class Coin : MonoBehaviour
 
 	void OnMouseDown()
 	{
-		if (State != eCoinState.Idle)
+		if (State != eCoinState.Idle || GameController.Instance.Pause)
 		{
 			return;
 		}
 
 		Map map = GameController.Instance.map;
+		if ( map.Select != null )
+		{
+			map.Select.selector.SetActive ( false );
+		}
 
-		map.Select = this;
+		if (map.Select != null && map.Select != this && isNeighbour(map.Select))
+		{
+			map.swap(this, map.Select);
+			map.Select = null;
+		}
+		else
+		{
+			map.Select = this;
+			map.Focused = this;
+		}
 	}
 
 	void OnMouseUp()
 	{
+		if (GameController.Instance.Pause)
+		{
+			return;
+		}
 		Map map = GameController.Instance.map;
 		
-		map.Select = null;
+		map.Focused = null;
+		if ( map.Select == this )
+		{
+			selector.SetActive(true);
+		}
 
 		if (Debug.isDebugBuild)
 		{
@@ -190,25 +210,30 @@ public class Coin : MonoBehaviour
 
 	void OnMouseOver()
 	{ 
-		if (State != eCoinState.Idle)
+		if (State != eCoinState.Idle || GameController.Instance.Pause)
 		{
-			Debug.Log("Failed swap coin state: " + State);
 			return;
 		}
 
 		Map map = GameController.Instance.map;
 
-		if (map.Select == this || map.Select == null)
+		if (map.Focused == this || map.Focused == null)
 		{
 			return;
 		}
 	
-		if (isNeighbour (map.Select))
+		if (isNeighbour (map.Focused))
 		{
-			map.swap(this, map.Select);
+			map.swap(this, map.Focused);
 		}
 		else
 		{
+			map.Focused = null;
+		}
+
+		if ( map.Select != null )
+		{
+			map.Select.selector.SetActive ( false );
 			map.Select = null;
 		}
 	}
@@ -243,7 +268,7 @@ public class Coin : MonoBehaviour
 
 	public void moveToCell(float delay, string msg)
 	{
-		moveTo (GetRealPosition (), delay, msg);
+		moveTo ( GetRealPosition (), delay, msg);
 	}
 
 	public void dieWithDelay(float delay)

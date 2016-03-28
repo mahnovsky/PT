@@ -2,6 +2,7 @@ using UnityEngine;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Security.Cryptography.X509Certificates;
 
 
 public enum NeighbourPos
@@ -15,8 +16,8 @@ public enum NeighbourPos
 
 public class Cell : MonoBehaviour
 {
-	public readonly float Width = 210;
-	public readonly float Height = 210;
+	public static readonly float Width = 210;
+	public static readonly float Height = 210;
 
 	public void Init(int index, Point pos, bool empty)
 	{
@@ -25,6 +26,15 @@ public class Cell : MonoBehaviour
 		Empty = empty;
 
 		Neighbours = new Cell[(int)NeighbourPos.Count];
+		int offset = 0;
+		if (Position.Y % 2 == 0)
+			offset = 1;
+		var two = (Position.X % 2) == offset;
+		if (two)
+		{
+			var render = GetComponent<SpriteRenderer>();
+			render.color = new Color(0, 0, 0, 100f / 255);
+		}
 	}
 
 	public int Index { get; private set; }

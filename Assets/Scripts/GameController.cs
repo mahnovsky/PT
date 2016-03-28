@@ -2,7 +2,6 @@ using System;
 using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
-using UnityEngine.SceneManagement;
 
 public class GameController : MonoBehaviour
 {
@@ -11,24 +10,22 @@ public class GameController : MonoBehaviour
 	public GameObject		destroyEffect;
 	public GameObject		lighting;
 	public Sprite[]			coinSprites;
+	public UIRoot uiRoot;
+	public GameObject levelEndPanel;
 
 	public bool				enableCheats	= true;
-	public GameObject		levelEndPanel;
-	public GameObject 		optionPanel;
-	public GameObject 		shadow;
-	private GameObject 		m_currentPanel;
 
 	GUIStyle				m_style;
 
-	string					m_mode;
-	string					m_levelNumStr;
-	int						m_changeCoin = 0;
+	int						m_changeCoin	= 0;
 	int						m_currentCoin	= 0;
 	private LevelLoader		m_levelLoader;
 	private LevelSaver		m_levelSaver;
 	private Sprite			m_currSprite;
-	private Texture2D m_texture;
-	private string m_number = "";
+	private Texture2D		m_texture;
+	private string			m_number		= "";
+
+	public bool Pause { get; private set; }
 
 	void Awake()
 	{
@@ -42,15 +39,11 @@ public class GameController : MonoBehaviour
 		Instance = this;
 
 		map.Initialize(6, 8);
-		if (CurrentLevel != null)
+		if (CurrentLevel != null && Debug.isDebugBuild)
 		{
 			m_style = new GUIStyle();
 
 			m_style.fontSize = 16;
-
-			m_mode = "Mode: " + CurrentLevel.LevelMode.ToString();
-
-			m_levelNumStr = "Level: " + LevelNum.ToString();
 		}
 
 		if (!enableCheats)
@@ -63,11 +56,7 @@ public class GameController : MonoBehaviour
 		{
 			return;
 		}
-		/*
-		GUI.Label (new Rect (0, 0, 100, 50), m_levelNumStr, m_style);
-		
-		GUI.Label (new Rect (0, 30, 100, 50), m_mode, m_style);
-		*/
+
 		if (!enableCheats)
 		{
 			return;
@@ -191,49 +180,15 @@ public class GameController : MonoBehaviour
 		}
 	}
 
-	public void OnMenuButton()
+	public void OnNextLevelBtn()
 	{
-		SceneManager.LoadScene("MainMenu");
-	}
-
-	public void OnMapBtn()
-	{
-		SceneManager.LoadScene("Map");
+		++LevelNum;
+		Application.LoadLevel("Game");
 	}
 
 	public void OnLevelEnd()
 	{
-		levelEndPanel.SetActive (true);
-		shadow.SetActive (true);
-	}
-
-	public void OnRepeatLevelBtn()
-	{
-		SceneManager.LoadScene("Game");
-	}
-
-	public void OnNextLevelBtn()
-	{
-		++LevelNum;
-		SceneManager.LoadScene("Game");
-	}
-
-	public void OnOptionBtn()
-	{
-		optionPanel.SetActive (true);
-		shadow.SetActive (true);
-
-		m_currentPanel = optionPanel;
-	}
-
-	public void OnClose()
-	{
-		shadow.SetActive (false);
-		if (m_currentPanel != null) 
-		{
-			m_currentPanel.SetActive (false);
-			m_currentPanel = null;
-		}
+		uiRoot.OnEnablePanel(levelEndPanel);
 	}
 
 	public static GameController Instance { get; private set; }

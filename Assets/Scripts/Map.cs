@@ -25,9 +25,7 @@ public class Map : MonoBehaviour
 
 	public Vector3 GetRealPosition(int x, int y)
 	{	
-		Vector3 offset = new Vector3 (CoinOffset.x, CoinOffset.y);
-
-		Vector3 pos = new Vector3 ((Coin.coinWidth + Coin.border / 2) * x, (Coin.coinHeight + Coin.border / 2) * y);
+		Vector3 pos = new Vector3 (Cell.Width * x * 0.01f, Cell.Height * y * 0.01f);
 
 		return pos;
 	}
@@ -104,8 +102,8 @@ public class Map : MonoBehaviour
 	{
 		print ("map init w, h: " + w + ", " + h);
 
-		float realCoinW = Coin.coinWidth + Coin.border;
-		float realCoinH = Coin.coinHeight + Coin.border;
+		float realCoinW = Cell.Width * 0.01f;
+		float realCoinH = Cell.Height * 0.01f;
 
 		m_size = new Vector2 (w * realCoinW, h * realCoinH);
 		Width = w;
@@ -197,11 +195,8 @@ public class Map : MonoBehaviour
 		return new Point (index % Width, index / Width);
 	}
 
-	public Coin Select
-	{
-		get { return m_selected; }
-		set { m_selected = value; }
-	}
+	public Coin Select { get; set; }
+	public Coin Focused { get; set; }
 
 	public int Blocked
 	{
@@ -268,7 +263,7 @@ public class Map : MonoBehaviour
 
 	public bool trySwap(Coin c1, Coin c2)
 	{
-		Select = null;
+		Focused = null;
 
 		GetCell (c1.PlaceId).CoinRef = c2;
 		GetCell (c2.PlaceId).CoinRef = c1;
@@ -530,7 +525,7 @@ public class Map : MonoBehaviour
 		return false;
 	}
 
-	public void removeHorizontalCoins(int x, int y, int coinId)
+	public void RemoveHorizontalCoins(int x, int y, int coinId, bool init)
 	{
 		int xstart = x - 1;
 		List<Coin> match = new List<Coin>();
@@ -540,7 +535,7 @@ public class Map : MonoBehaviour
 
 			if(countNearCoinVer(new Point(xstart, y)) > 1)
 			{
-				removeVerticalCoins(xstart, y, coinId);
+				RemoveVerticalCoins(xstart, y, coinId, init);
 			}
 
 			--xstart;
@@ -553,19 +548,19 @@ public class Map : MonoBehaviour
 
 			if(countNearCoinVer(new Point(xstart, y)) > 1)
 			{
-				removeVerticalCoins(xstart, y, coinId);
+				RemoveVerticalCoins(xstart, y, coinId, init);
 			}
 
 			++xstart;
 		}
 
-		if (match.Count > 0)
+		if (match.Count > 1 && !init)
 		{
 			m_currLevel.OnMatch(coinId, match.Count + 1);
 		}
 	}
 
-	public void removeVerticalCoins(int x, int y, int coinId)
+	public void RemoveVerticalCoins(int x, int y, int coinId, bool init)
 	{
 		List<Coin> match = new List<Coin> ();
 		int ystart = y - 1;
@@ -575,7 +570,7 @@ public class Map : MonoBehaviour
 
 			if(countNearCoinHor(new Point(x, ystart)) > 1)
 			{
-				removeHorizontalCoins(x, ystart, coinId);
+				RemoveHorizontalCoins(x, ystart, coinId, init);
 			}
 
 			--ystart;
@@ -588,15 +583,15 @@ public class Map : MonoBehaviour
 
 			if(countNearCoinHor(new Point(x, ystart)) > 1)
 			{
-				removeHorizontalCoins(x, ystart, coinId);
+				RemoveHorizontalCoins(x, ystart, coinId, init);
 			}
 
 			++ystart;
 		}
 
-		if (match.Count > 0)
+		if (match.Count > 1 && !init)
 		{
-			m_currLevel.OnMatch(match[0].CoinId, match.Count);
+			m_currLevel.OnMatch(coinId, match.Count + 1);
 		}
 	}
 
@@ -647,7 +642,7 @@ public class Map : MonoBehaviour
 			{
 				int idc = getCoin(i).CoinId;
 				markCoin(cell.Position.X, cell.Position.Y, idc);
-				removeHorizontalCoins(cell.Position.X, cell.Position.Y, idc);
+				RemoveHorizontalCoins(cell.Position.X, cell.Position.Y, idc, init);
 			}
 
 			int vcount = countNearCoinVer(cell.Position);
@@ -655,7 +650,7 @@ public class Map : MonoBehaviour
 			{
 				int idc = getCoin(i).CoinId;
 				markCoin(cell.Position.X, cell.Position.Y, idc);
-				removeVerticalCoins(cell.Position.X, cell.Position.Y, idc);
+				RemoveVerticalCoins(cell.Position.X, cell.Position.Y, idc, init);
 			}
 		}
 		
