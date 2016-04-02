@@ -131,7 +131,7 @@ public class Map : MonoBehaviour
 
 		if (delta > 0) 
 		{
-			hh += (delta * 0.9f);
+			hh += (delta * 0.4f);
 		}
 
 		transform.localPosition = new Vector2(-hw, -hh);
@@ -140,7 +140,7 @@ public class Map : MonoBehaviour
 	public void Refresh()
 	{
 		var disableCoins = GameController.CurrentLevel.DisabledCells;
-		if (disableCoins != null)
+		if (disableCoins != null && disableCoins.Count > 0)
 		{
 			foreach (Point pos in disableCoins)
 			{
@@ -158,6 +158,17 @@ public class Map : MonoBehaviour
 					}
 
 					cell.gameObject.SetActive(false);
+				}
+			}
+		}
+		else
+		{
+			foreach (var cell in m_greed)
+			{
+				if ( cell.Empty )
+				{
+					cell.Empty = false;
+					cell.gameObject.SetActive(true);
 				}
 			}
 		}

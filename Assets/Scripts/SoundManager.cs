@@ -5,6 +5,7 @@ public class SoundManager : MonoBehaviour
 {
 	public AudioSource musicSource;
 	public AudioSource soundSource;
+	private bool m_soundMute;
 
 	public static SoundManager Instance { get; private set; }
 
@@ -26,5 +27,14 @@ public class SoundManager : MonoBehaviour
 		soundSource.clip = clip;
 
 		soundSource.Play();
+	}
+
+	public void TurnMusic(bool on)
+	{
+		musicSource.mute = !on;
+	}
+	public void TurnSound(bool on)
+	{
+		soundSource.mute = !on;
 	}
 }

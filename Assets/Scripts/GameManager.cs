@@ -1,12 +1,22 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class UIRoot : MonoBehaviour
+public class GameManager : MonoBehaviour
 {
-	private GameObject m_currentPanel;
+	public static GameManager Instance { get; private set; }
 
 	public AudioClip buttonClip;
 	public GameObject shadow;
+	private GameObject m_currentPanel;
+
+	public static bool Pause { get; set; }
+
+	void Awake ()
+	{
+		Instance = this;
+
+		Pause = false;
+	}
 
 	public void PlayButtonSound( )
 	{
@@ -21,6 +31,8 @@ public class UIRoot : MonoBehaviour
 		shadow.SetActive(true);
 
 		m_currentPanel = panel;
+
+		Pause = true;
 	}
 
 	public void OnClosePanel( )
@@ -31,6 +43,8 @@ public class UIRoot : MonoBehaviour
 		shadow.SetActive(false);
 
 		m_currentPanel = null;
+
+		Pause = false;
 	}
 
 	public void OnSwapScene( string nextScene )
@@ -38,5 +52,12 @@ public class UIRoot : MonoBehaviour
 		PlayButtonSound();
 
 		Application.LoadLevel(nextScene);
+	}
+
+	public void OnGameLoad ()
+	{
+		PlayButtonSound();
+
+		Application.LoadLevel("Game");
 	}
 }

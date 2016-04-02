@@ -39,9 +39,9 @@ public class Coin : MonoBehaviour
 		GetComponent<BoxCollider2D> ().enabled = true;
 		refreshPosition ();
 
-		Vector2 size = sp.bounds.size;
+		/*Vector2 size = sp.bounds.size;
 
-		transform.localScale = new Vector3(coinWidth / size.x, coinHeight / size.y);
+		transform.localScale = new Vector3(coinWidth / size.x, coinHeight / size.y);*/
 	}
 
 	public void changeCoinId(int nId)
@@ -165,7 +165,7 @@ public class Coin : MonoBehaviour
 
 	void OnMouseDown()
 	{
-		if (State != eCoinState.Idle || GameController.Instance.Pause)
+		if (State != eCoinState.Idle || GameManager.Pause)
 		{
 			return;
 		}
@@ -190,7 +190,7 @@ public class Coin : MonoBehaviour
 
 	void OnMouseUp()
 	{
-		if (GameController.Instance.Pause)
+		if (GameManager.Pause)
 		{
 			return;
 		}
@@ -210,7 +210,7 @@ public class Coin : MonoBehaviour
 
 	void OnMouseOver()
 	{ 
-		if (State != eCoinState.Idle || GameController.Instance.Pause)
+		if (State != eCoinState.Idle || GameManager.Pause)
 		{
 			return;
 		}

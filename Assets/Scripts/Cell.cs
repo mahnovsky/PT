@@ -16,8 +16,8 @@ public enum NeighbourPos
 
 public class Cell : MonoBehaviour
 {
-	public static readonly float Width = 210;
-	public static readonly float Height = 210;
+	public static readonly float Width = 150;
+	public static readonly float Height = 150;
 
 	public void Init(int index, Point pos, bool empty)
 	{

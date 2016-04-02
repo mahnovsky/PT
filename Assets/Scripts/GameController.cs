@@ -10,9 +10,8 @@ public class GameController : MonoBehaviour
 	public GameObject		destroyEffect;
 	public GameObject		lighting;
 	public Sprite[]			coinSprites;
-	public UIRoot uiRoot;
-	public GameObject levelEndPanel;
-
+	public GameObject		levelEndPanel;
+	public GameObject		background;
 	public bool				enableCheats	= true;
 
 	GUIStyle				m_style;
@@ -29,23 +28,16 @@ public class GameController : MonoBehaviour
 
 	void Awake()
 	{
-		if ( Instance != null )
-		{
-			Destroy(gameObject);
-
-			return;
-		}
-
 		Instance = this;
 
-		map.Initialize(6, 8);
+		map.Initialize(8, 8);
 		if (CurrentLevel != null && Debug.isDebugBuild)
 		{
 			m_style = new GUIStyle();
 
 			m_style.fontSize = 16;
 		}
-
+		
 		if (!enableCheats)
 			Camera.main.aspect = designSize.X / designSize.Y;
 	}
@@ -70,14 +62,16 @@ public class GameController : MonoBehaviour
 		else if (m_changeCoin == 2)
 			sw = "Remove cell";
 		else if (m_changeCoin == 3)
-			sw = "Curr level";
-		else if (m_changeCoin == 4)
 			sw = "Move count";
+		else if (m_changeCoin == 4)
+			sw = "Save level";
+		else if (m_changeCoin == 5)
+			sw = "Refresh";
 
 		if (GUI.Button (new Rect (0, 30, 200, 50), sw))
 		{
 			++m_changeCoin;
-			if (m_changeCoin > 4)
+			if (m_changeCoin > 5)
 				m_changeCoin = 0;
 		}
 		
@@ -106,9 +100,28 @@ public class GameController : MonoBehaviour
 			}
 		}
 
-		if (GUI.Button(new Rect(0, 130, 100, 50), "save"))
+		if ( GUI.Button ( new Rect ( 0, 130, 100, 50 ), "apply" ) )
 		{
-			SaveLevel();
+			int p = 0;
+			if (!String.IsNullOrEmpty(m_number))
+				p = Int32.Parse ( m_number );
+			
+			if (m_changeCoin == 3)
+			{
+				ClassicLevel cl = CurrentLevel as ClassicLevel;
+
+				cl.MaxMoveCount = p;
+			}
+			if ( m_changeCoin == 4)
+			{
+				CurrentLevel.Number = p;
+				SaveLevel();
+			}
+			else if (m_changeCoin == 5)
+			{
+				CurrentLevel.DisabledCells.Clear();
+				map.Refresh();
+			}
 		}
 
 		string num = GUI.TextField(new Rect(0, 180, 100, 50), m_number);
@@ -116,17 +129,6 @@ public class GameController : MonoBehaviour
 			return;
 
 		m_number = num;
-		int p = Int32.Parse(num);
-
-		if (p > 0)
-		{
-			ClassicLevel cl = CurrentLevel as ClassicLevel;
-			
-			if (m_changeCoin == 3 && p != CurrentLevel.Number)
-				CurrentLevel.Number = p;
-			else if (cl != null && m_changeCoin == 4 && p != cl.MaxMoveCount)
-				cl.MaxMoveCount = p;
-		}
 	}
 
 	public void SaveLevel( )
@@ -188,7 +190,7 @@ public class GameController : MonoBehaviour
 
 	public void OnLevelEnd()
 	{
-		uiRoot.OnEnablePanel(levelEndPanel);
+		GameManager.Instance.OnEnablePanel(levelEndPanel);
 	}
 
 	public static GameController Instance { get; private set; }
