@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 using System.Collections;
 
 public class GameManager : MonoBehaviour
@@ -8,6 +9,8 @@ public class GameManager : MonoBehaviour
 	public AudioClip buttonClip;
 	public GameObject shadow;
 	private GameObject m_currentPanel;
+
+	public String GameDirectory;
 
 	public static bool Pause { get; set; }
 
@@ -54,9 +57,11 @@ public class GameManager : MonoBehaviour
 		Application.LoadLevel(nextScene);
 	}
 
-	public void OnGameLoad ()
+	public void OnGameLoad (string gameDir)
 	{
 		PlayButtonSound();
+
+		GameDirectory = gameDir;
 
 		Application.LoadLevel("Game");
 	}

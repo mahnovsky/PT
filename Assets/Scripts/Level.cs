@@ -4,6 +4,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography.X509Certificates;
+using Assets.Scripts;
 using UnityEngine.Assertions;
 using UnityEngine.UI;
 
@@ -49,12 +50,17 @@ public class Level
 	public virtual void OnCoinMove (Coin c)
 	{ }
 
-	public virtual void OnMatch(int cid, int count)
-	{ 
-		Score += (5 * count);
+	public virtual void OnMatch( List<Coin> coins )
+	{
+		int total = 5 * coins.Count;
+		Score += total;
 
 		if (OnScoreUpdate != null)
 			OnScoreUpdate.Invoke (Score);
+		int index = Mathf.FloorToInt( (float)coins.Count / 2 );
+		var pos = Camera.main.WorldToScreenPoint(coins[index].transform.position);
+		PopupLabelGenerator.Instance.Print(
+			total + " score", pos, Vector2.up * 100, 2f, 1f);
 	}
 
 	public Coin CreateRandomCoin( int index )

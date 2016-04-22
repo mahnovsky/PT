@@ -540,6 +540,7 @@ public class Map : MonoBehaviour
 	{
 		int xstart = x - 1;
 		List<Coin> match = new List<Coin>();
+		match.Add(GetCell(x, y).CoinRef);
 		while (xstart >= 0 && markCoin(xstart, y, coinId))
 		{
 			match.Add(GetCell(xstart, y).CoinRef);
@@ -565,15 +566,16 @@ public class Map : MonoBehaviour
 			++xstart;
 		}
 
-		if (match.Count > 1 && !init)
+		if (match.Count > 2 && !init)
 		{
-			m_currLevel.OnMatch(coinId, match.Count + 1);
+			m_currLevel.OnMatch( match );
 		}
 	}
 
 	public void RemoveVerticalCoins(int x, int y, int coinId, bool init)
 	{
 		List<Coin> match = new List<Coin> ();
+		match.Add(GetCell(x, y).CoinRef);
 		int ystart = y - 1;
 		while (ystart >= 0 && markCoin(x, ystart, coinId))
 		{
@@ -600,9 +602,9 @@ public class Map : MonoBehaviour
 			++ystart;
 		}
 
-		if (match.Count > 1 && !init)
+		if (match.Count > 2 && !init)
 		{
-			m_currLevel.OnMatch(coinId, match.Count + 1);
+			m_currLevel.OnMatch(match);
 		}
 	}
 

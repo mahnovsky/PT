@@ -1,6 +1,7 @@
 ﻿using System;
 using UnityEngine;
 using System.Collections;
+using System.IO;
 
 public class LevelLoader
 {
@@ -32,9 +33,10 @@ public class LevelLoader
 
 	public Level Load( int num )
 	{
-		string fileName = "level_" + num;
-
-		TextAsset textData = Resources.Load(fileName, typeof(TextAsset)) as TextAsset;
+		string levelDir = GameManager.Instance.GameDirectory;
+		string fileName = GameManager.Instance.GameDirectory + "level_" + num;
+		var path = levelDir != null ? Path.Combine(levelDir, fileName) : fileName;
+		TextAsset textData = Resources.Load(path, typeof(TextAsset)) as TextAsset;
 
 		if (textData != null)
 		{
