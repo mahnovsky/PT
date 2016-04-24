@@ -26,6 +26,11 @@ public class GameController : MonoBehaviour
 
 	public bool Pause { get; private set; }
 
+	void Update( )
+	{
+		CurrentLevel.ScoreCounter.Update();
+	}
+
 	void Awake()
 	{
 		Instance = this;

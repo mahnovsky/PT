@@ -4,6 +4,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography.X509Certificates;
+using Assets;
 using Assets.Scripts;
 using UnityEngine.Assertions;
 using UnityEngine.UI;
@@ -19,6 +20,9 @@ public class Level
 	public List<Point> DisabledCells { get; set; }
 	public int Number { get; set; }
 	public int Score { get; protected set; }
+
+	public ScoreCounter ScoreCounter { get; set; }
+
 	public Action<int> OnScoreUpdate { get; set; }
 
 	public Mode LevelMode { get; protected set; }
@@ -26,10 +30,12 @@ public class Level
 	public Level()
 	{
 		DisabledCells = new List<Point>();
+		ScoreCounter = new ScoreCounter();
 	}
 
-	public virtual  void Init( )
-	{}
+	public virtual void Init()
+	{
+	}
 
 	public virtual void Refresh()
 	{
@@ -53,14 +59,21 @@ public class Level
 	public virtual void OnMatch( List<Coin> coins )
 	{
 		int total = 5 * coins.Count;
-		Score += total;
+		ScoreCounter.AddScore(total);
 
-		if (OnScoreUpdate != null)
-			OnScoreUpdate.Invoke (Score);
 		int index = Mathf.FloorToInt( (float)coins.Count / 2 );
 		var pos = Camera.main.WorldToScreenPoint(coins[index].transform.position);
 		PopupLabelGenerator.Instance.Print(
-			total + " score", pos, Vector2.up * 100, 2f, 1f);
+			total.ToString(), pos, Vector2.up * 100, 2f, 1f);
+
+		if (coins.Count == 4)
+		{
+			var fa = coins[index].transform.GetComponentsInChildren<FrameAnimator>(true);
+			foreach (var frameAnimator in fa)
+			{
+				frameAnimator.gameObject.SetActive(true);
+			}
+		}
 	}
 
 	public Coin CreateRandomCoin( int index )

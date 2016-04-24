@@ -16,9 +16,7 @@ public class UITopPanel : MonoBehaviour
 		m_levelLabel = levelTransform.GetComponent<Text> ();*/
 
 		var level = GameController.CurrentLevel;
-
-		level.OnScoreUpdate += OnScoreUpdate;
-		OnScoreUpdate (level.Score);
+		level.ScoreCounter.Init( m_scoreLabel );
 
 		m_levelLabel.text = "Level: " + level.Number;
 	}
