@@ -78,7 +78,7 @@ public class Level
 
 	public Coin CreateRandomCoin( int index )
 	{
-		return GameController.Instance.map.createRandomCoin(index);
+		return GameController.Instance.map.CreateRandomCoin(index);
 	}
 
 	public bool Load(JSONObject obj)

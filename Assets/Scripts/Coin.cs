@@ -1,10 +1,53 @@
 ﻿using System;
 using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 using Holoville.HOTween;
+using UnityEngine.UI;
 
-public enum eCoinState {
-	Created,
+public class StateMachine<T>
+{
+	public T CurrentState { get; private set; }
+
+	private Dictionary<T, List<T>> m_stateToState;
+
+	public Action<T, T> OnStateChange { get; set; } 
+
+	public StateMachine(T defaultState)
+	{
+		CurrentState = defaultState;
+		m_stateToState = new Dictionary<T, List<T>>();
+	} 
+
+	public void AddState( T state, List<T> toState )
+	{
+		m_stateToState[state] = toState;
+	}
+
+	public bool SetState( T state )
+	{
+		List<T> states;
+		if ( m_stateToState.TryGetValue ( CurrentState, out states ) )
+		{
+			foreach (var state1 in states)
+			{
+				if (state1.Equals(state))
+				{
+					OnStateChange(CurrentState, state);
+					CurrentState = state;
+					
+					return true;
+				}
+			}
+		}
+
+		return false;
+	}
+}
+
+public enum eCoinState
+{
+	MarkDelete,
 	Deleted,
 	Idle,
 	Moved
@@ -16,10 +59,15 @@ public class Coin : MonoBehaviour
 	public static float coinHeight	= 200f * 0.01f;
 	public static float border		= 5f * 0.01f;
 	private GameObject m_effect;
-
+	private StateMachine<eCoinState> m_stateMachine;
 	public GameObject selector;
 
-	public void init(int placeId, int x, int y, int coinId, Sprite sp)
+	public StateMachine<eCoinState> StateMachine
+	{
+		get { return m_stateMachine; }
+	}
+
+	public void Init(int placeId, int x, int y, int coinId, Sprite sp)
 	{
 		print ("[Coin] init placeId: " + placeId);
 		
@@ -31,20 +79,30 @@ public class Coin : MonoBehaviour
 
 		spriteRenderer.sprite = sp;
 
-		updateLoc (placeId, x, y);
-		Deleted = false;
-		State = eCoinState.Created;
+		UpdateLoc (placeId, x, y);
 
 		spriteRenderer.enabled = true;
 		GetComponent<BoxCollider2D> ().enabled = true;
-		refreshPosition ();
+		RefreshPosition ();
+		m_stateMachine = new StateMachine<eCoinState>(eCoinState.Idle);
 
+		m_stateMachine.AddState(eCoinState.Idle, 
+			new List<eCoinState> { eCoinState.Moved, eCoinState.MarkDelete });
+
+		m_stateMachine.AddState(eCoinState.Moved, 
+			new List<eCoinState> { eCoinState.Idle });
+
+		m_stateMachine.AddState(eCoinState.MarkDelete, 
+			new List<eCoinState> { eCoinState.Deleted });
+
+		m_stateMachine.AddState(eCoinState.Deleted, 
+			new List<eCoinState> { eCoinState.Idle });
 		/*Vector2 size = sp.bounds.size;
 
 		transform.localScale = new Vector3(coinWidth / size.x, coinHeight / size.y);*/
 	}
 
-	public void changeCoinId(int nId)
+	public void ChangeCoinId(int nId)
 	{
 		SpriteRenderer spriteRenderer = GetComponent<SpriteRenderer> ();
 		
@@ -92,12 +150,12 @@ public class Coin : MonoBehaviour
 		return m.GetRealPosition(Position.X, Position.Y);
 	}
 
-	public void refreshPosition()
+	public void RefreshPosition()
 	{
 		transform.localPosition = GetRealPosition ();
 	}
 	
-	public void updateLoc(int newIndex, int x, int y)
+	public void UpdateLoc(int newIndex, int x, int y)
 	{
 		m_placeId = newIndex;
 		m_x = x;
@@ -107,53 +165,27 @@ public class Coin : MonoBehaviour
 		string name = spriteRenderer.sprite.name + "_" + PlaceId;
 		gameObject.name = name;
 	}
-	
-	public bool Deleted
-	{
-		get { return m_deleted; }
-		set { m_deleted = value; }
-	}
 
 	public eCoinState State
 	{
-		get { return m_state; }
-		set { changeState(value); }
+		get { return m_stateMachine.CurrentState; }
+		set { ChangeState(value); }
 	}
 
-	private void changeState(eCoinState state)
+	private void ChangeState(eCoinState state)
 	{
-		if (state == m_state)
+		if (state == m_stateMachine.CurrentState)
 		{
 			return;
 		}
 
-		if (m_state == eCoinState.Created && (state == eCoinState.Moved || state == eCoinState.Idle))
-		{
-			m_state = state;
-		}
-
-		if (m_state == eCoinState.Deleted && state == eCoinState.Created)
-		{
-			m_state = state;
-		}
-
-		if (m_state == eCoinState.Idle && (state == eCoinState.Moved || state == eCoinState.Deleted))
-		{
-			m_state = state;
-		}
-
-		if (m_state == eCoinState.Moved && state == eCoinState.Idle)
-		{
-			m_state = state;
-		}
-
-		if (m_state != state)
+		if ( !m_stateMachine.SetState( state ) )
 		{
 			Debug.Log("State change fail m_state: " + m_state + ", state: " + state);
 		}
 	}
 
-	public bool isNeighbour(Coin other)
+	public bool IsNeighbour(Coin other)
 	{
 	
 		int deltaX = Mathf.Abs(XPos - other.XPos);
@@ -176,9 +208,11 @@ public class Coin : MonoBehaviour
 			map.Select.selector.SetActive ( false );
 		}
 
-		if (map.Select != null && map.Select != this && isNeighbour(map.Select))
+		if (map.Select != null && 
+			map.Select != this && 
+			IsNeighbour(map.Select))
 		{
-			map.swap(this, map.Select);
+			map.Swap(this, map.Select);
 			map.Select = null;
 		}
 		else
@@ -222,9 +256,9 @@ public class Coin : MonoBehaviour
 			return;
 		}
 	
-		if (isNeighbour (map.Focused))
+		if (IsNeighbour (map.Focused))
 		{
-			map.swap(this, map.Focused);
+			map.Swap(this, map.Focused);
 		}
 		else
 		{
@@ -238,70 +272,73 @@ public class Coin : MonoBehaviour
 		}
 	}
 
-	public void moveTo(Vector3 pos, float delay, string msg)
+	public void MoveTo(Vector3 pos, float delay, string msg)
 	{
-		m_move = HOTween.To (transform, delay, new TweenParms()
-		            .Prop ("localPosition", pos)
-		            .Ease (EaseType.EaseInOutQuad)
-		            .OnStepComplete (onActionDone));
+		if (m_stateMachine.SetState(eCoinState.Moved))
+		{
+			m_move = HOTween.To(transform, delay, new TweenParms()
+				.Prop("localPosition", pos)
+				.Ease(EaseType.EaseInOutQuad)
+				.OnStepComplete(onActionDone));
 
-		m_msg = msg;
+			m_msg = msg;
 
-		State = eCoinState.Moved;
-
-		m_move.enabled = false;
+			m_move.enabled = false;
+		}
 	}
 
-	public void moveToSpeedBased(Vector3 pos, float speed, string msg)
-	{	
-		m_move = HOTween.To (transform, speed, new TweenParms()
-		            .Prop ("localPosition", pos).SpeedBased() // Position tween (set as relative)
-		            .Ease (EaseType.EaseInOutQuad) // Ease
-		            .OnStepComplete (onActionDone));
-		
-		m_msg = msg;
-		
-		State = eCoinState.Moved;
-
-		m_move.enabled = false;
-	}
-
-	public void moveToCell(float delay, string msg)
+	public void MoveToSpeedBased(Vector3 pos, float speed, string msg)
 	{
-		moveTo ( GetRealPosition (), delay, msg);
+		if (m_stateMachine.SetState(eCoinState.Moved))
+		{
+			m_move = HOTween.To(transform, speed, new TweenParms()
+				.Prop("localPosition", pos).SpeedBased() // Position tween (set as relative)
+				.Ease(EaseType.EaseInOutQuad) // Ease
+				.OnStepComplete(onActionDone));
+
+			m_msg = msg;
+
+			m_move.enabled = false;
+		}
 	}
 
-	public void dieWithDelay(float delay)
+	public void MoveToCell(float delay, string msg)
+	{
+		MoveTo ( GetRealPosition (), delay, msg);
+	}
+
+	public void DieWithDelay(float delay)
 	{
 		m_delay = delay;
-		m_needDie = true;
 		GameObject effect = GameController.Instance.destroyEffect;
 		Vector3 pos = transform.position;
 		pos.z = -5;
 		m_effect = Instantiate(effect, pos, Quaternion.identity) as GameObject;
 	}
 
-	public void destroy()
+	public void Destroy()
 	{
-		State = eCoinState.Deleted;
-		Map map = GameController.Instance.map;
-		map.RemoveList.Add(this);
-
-		GetComponent<SpriteRenderer>().enabled = false;
-		GetComponent<BoxCollider2D>().enabled = false;
-
-		if (m_move != null)
+		if (m_stateMachine.SetState(eCoinState.Deleted))
 		{
-			m_move.Kill();
+			Map map = GameController.Instance.map;
+			map.RemoveList.Add(this);
 
-			m_move = null;
-		}
+			GetComponent<SpriteRenderer>().enabled = false;
+			GetComponent<BoxCollider2D>().enabled = false;
 
-		if ( m_effect != null )
-		{
-			Destroy(m_effect);
+			if (m_move != null)
+			{
+				m_move.Kill();
 
-			m_effect = null;
+				m_move = null;
+			}
+
+			if (m_effect != null)
+			{
+				Destroy(m_effect);
+
+				m_effect = null;
+			}
 		}
 	}
 
@@ -311,11 +348,9 @@ public class Coin : MonoBehaviour
 		{
 			m_delay -= Time.deltaTime;
 		} 
-		else if (m_needDie)
+		else if (State == eCoinState.MarkDelete)
 		{
-			destroy();
-
-			m_needDie = false;
+			Destroy();
 
 			return;
 		}
@@ -323,7 +358,6 @@ public class Coin : MonoBehaviour
 		if (m_delay <= 0 && m_move != null && !m_move.enabled)
 		{
 			Map map = GameController.Instance.map;
-			map.onMoveBegin (this);
 
 			m_move.enabled = true;
 		}
@@ -331,11 +365,12 @@ public class Coin : MonoBehaviour
 
 	public void onActionDone()
 	{
-		State = eCoinState.Idle;
+		if (m_stateMachine.SetState(eCoinState.Idle))
+		{
+			Map map = GameController.Instance.map;
 
-		Map map = GameController.Instance.map;
-
-		map.onMoveDone (this, m_msg);
+			map.OnMoveDone(this, m_msg);
+		}
 	}
 
 	public bool Disabled
@@ -344,7 +379,6 @@ public class Coin : MonoBehaviour
 		set { m_disabled = value; }
 	}
 
-	private bool m_needDie;
 	private float m_delay;
 	private Tweener m_move;
 	private eCoinState m_state;

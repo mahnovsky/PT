@@ -177,7 +177,7 @@ public class GameController : MonoBehaviour
 	{
 		if (m_changeCoin == 1)
 		{
-			c.changeCoinId (m_currentCoin);
+			c.ChangeCoinId (m_currentCoin);
 		}
 		else if (m_changeCoin == 2)
 		{

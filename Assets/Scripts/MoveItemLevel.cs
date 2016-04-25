@@ -30,10 +30,10 @@ public class MoveItemLevel : Level
 		{
 			Level currLevel = GameController.CurrentLevel;
 			
-			return map.createCoin (index, GameController.CoinSprites.Length + 1, m_coinSprite);
+			return map.CreateCoin (index, GameController.CoinSprites.Length + 1, m_coinSprite);
 		}
 		
-		return map.createRandomCoin (index);
+		return map.CreateRandomCoin (index);
 	}
 
 	public override void OnCoinsSwap (Coin c1, Coin c2)
