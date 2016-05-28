@@ -16,9 +16,18 @@ public class GameManager : MonoBehaviour
 
 	void Awake ()
 	{
-		Instance = this;
+		if (Instance == null)
+		{
+			Instance = this;
 
-		Pause = false;
+			Pause = false;
+
+			DontDestroyOnLoad(gameObject);
+		}
+		else
+		{
+			Destroy(gameObject);
+		}
 	}
 
 	public void PlayButtonSound( )

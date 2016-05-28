@@ -10,7 +10,12 @@ public class GameController : MonoBehaviour
 	public GameObject		destroyEffect;
 	public GameObject		lighting;
 	public Sprite[]			coinSprites;
-	public GameObject		levelEndPanel;
+
+	public GameObject		failPanel;
+	public GameObject		winPanel;
+
+	public Image			timeBar;
+
 	public GameObject		background;
 	public bool				enableCheats	= true;
 
@@ -193,9 +198,14 @@ public class GameController : MonoBehaviour
 		Application.LoadLevel("Game");
 	}
 
-	public void OnLevelEnd()
+	public void OnLevelFail()
 	{
-		GameManager.Instance.OnEnablePanel(levelEndPanel);
+		GameManager.Instance.OnEnablePanel(winPanel);
+	}
+
+	public void OnLevelWin()
+	{
+		GameManager.Instance.OnEnablePanel(failPanel);	
 	}
 
 	public static GameController Instance { get; private set; }

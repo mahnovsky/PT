@@ -8,4 +8,9 @@ public class Menu : MonoBehaviour
 	{
 		Application.LoadLevel("Game");
 	}
+
+	public void OnArcadeClick( )
+	{
+		Application.LoadLevel("LevelsList");
+	}
 }

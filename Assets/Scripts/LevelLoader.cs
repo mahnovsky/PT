@@ -34,9 +34,9 @@ public class LevelLoader
 	public Level Load( int num )
 	{
 		string levelDir = GameManager.Instance.GameDirectory;
-		string fileName = GameManager.Instance.GameDirectory + "level_" + num;
+		string fileName = "level_" + num;
 		var path = levelDir != null ? Path.Combine(levelDir, fileName) : fileName;
-		TextAsset textData = Resources.Load(path, typeof(TextAsset)) as TextAsset;
+		TextAsset textData = Resources.Load(levelDir + "/" + fileName, typeof(TextAsset)) as TextAsset;
 
 		if (textData != null)
 		{

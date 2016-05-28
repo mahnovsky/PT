@@ -41,7 +41,7 @@ public class MoveItemLevel : Level
 		if (c1.CoinId == m_coinId && c1.PlaceId == m_outIndex)
 		{
 			//GameController.Instance.CurrentLevel.loadNextLevel();
-			GameController.Instance.OnLevelEnd();
+			GameController.Instance.OnLevelWin();
 		}
 
 		if (c2.CoinId == m_coinId && c2.PlaceId == m_outIndex) {

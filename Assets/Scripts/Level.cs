@@ -20,6 +20,7 @@ public class Level
 	public List<Point> DisabledCells { get; set; }
 	public int Number { get; set; }
 	public int Score { get; protected set; }
+	public float TotalTime { get; protected set; }
 
 	public ScoreCounter ScoreCounter { get; set; }
 
@@ -108,6 +109,11 @@ public class Level
 
 			parser.ParseArray(ob);
 		}));
+
+		parser.AddFunc("time", (key, ob) =>
+		{
+			TotalTime = ob.n;
+		});
 
 		InitParser(parser);
 

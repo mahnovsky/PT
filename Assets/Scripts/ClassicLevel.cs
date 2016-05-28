@@ -29,7 +29,7 @@ public class ClassicLevel : Level
 		Debug.Log ("OnBoardStable mc / maxmc: " + MoveCount + " / " + MaxMoveCount);
 		if ( MoveCount <= 0 )
 		{
-			GameController.Instance.OnLevelEnd ( );
+			GameController.Instance.OnLevelFail ( );
 		}
 	}
 
