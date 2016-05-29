@@ -2,6 +2,7 @@ using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 using System.Xml;
+using System;
 
 public class Map : MonoBehaviour
 {
@@ -11,6 +12,10 @@ public class Map : MonoBehaviour
 	public float			swapSpeed;
 	public int Width { get; private set; }
 	public int Height { get; private set; }
+
+	public Action<Coin, Coin> 	OnCoinsSwap { get; set; }
+	public System.Action	 	OnBoardStable { get; set; }
+	public Action<List<Coin>> 	OnMatch { get; set; }
 
 	// private section
 	private Cell[]		m_greed;
@@ -228,8 +233,6 @@ public class Map : MonoBehaviour
 		if (coin.State != eCoinState.Idle)
 			return;
 
-		m_currLevel.OnCoinMove(coin);
-
 		GetCell(coin.PlaceId).CoinRef = coin;
 
 		if(msg == "failSwap")
@@ -299,7 +302,8 @@ public class Map : MonoBehaviour
 		c1.UpdateLoc (c2.PlaceId, c2.XPos, c2.YPos);
 		c2.UpdateLoc (posToIndex (pos.X, pos.Y), pos.X, pos.Y);
 
-		m_currLevel.OnCoinsSwap (c1, c2);
+		if (OnCoinsSwap != null)
+			OnCoinsSwap.Invoke (c1, c2);
 	}
 
 	public Coin CreateRandomCoin(int placeId)
@@ -572,9 +576,9 @@ public class Map : MonoBehaviour
 			++xstart;
 		}
 
-		if (match.Count > 2 && !init)
+		if (match.Count > 2 && !init && OnMatch != null)
 		{
-			m_currLevel.OnMatch( match );
+			OnMatch.Invoke( match );
 		}
 	}
 
@@ -608,9 +612,9 @@ public class Map : MonoBehaviour
 			++ystart;
 		}
 
-		if (match.Count > 2 && !init)
+		if (match.Count > 2 && !init && OnMatch != null)
 		{
-			m_currLevel.OnMatch(match);
+			OnMatch.Invoke(match);
 		}
 	}
 
@@ -689,7 +693,8 @@ public class Map : MonoBehaviour
 
 		if (deletedCoins == 0)
 		{
-			GameController.CurrentLevel.OnBoardStable ();
+			if (OnBoardStable != null)
+				OnBoardStable.Invoke ();
 		}
 		else
 		{

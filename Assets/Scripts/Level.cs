@@ -9,14 +9,57 @@ using Assets.Scripts;
 using UnityEngine.Assertions;
 using UnityEngine.UI;
 
-public class Level
+public class LevelComponent
 {
-	public enum Mode
+	public virtual void Init (JSONObject obj) {}
+
+	public virtual void Free() {}
+}
+
+class MoveCounter : LevelComponent
+{
+	private Level m_level;
+
+	public int TotalMoves { get; set; }
+	public int Moves { get; private set; }
+
+	public override void Init(JSONObject obj)
 	{
-		Classic,
-		MoveItem
+		var board = GameController.Instance.board;
+
+		board.OnCoinsSwap += OnCoinsSwap;
+
+		JSONObject mc = obj.GetField ("moveCount");
+
+		if (mc != null) 
+		{
+			TotalMoves = (int)mc.n;
+			Moves = TotalMoves;
+		}
+
+		Debug.Log ("Hello From MoveCounter");
 	}
 
+	public override void Free()
+	{
+		var board = GameController.Instance.board;
+
+		board.OnCoinsSwap -= OnCoinsSwap;
+	}
+
+	void OnCoinsSwap(Coin c1, Coin c2)
+	{
+		--Moves;
+
+		if (Moves <= 0) 
+		{
+			GameController.Instance.OnLevelFail ();
+		}
+	}
+}
+
+public class Level
+{
 	public List<Point> DisabledCells { get; set; }
 	public int Number { get; set; }
 	public int Score { get; protected set; }
@@ -26,16 +69,32 @@ public class Level
 
 	public Action<int> OnScoreUpdate { get; set; }
 
-	public Mode LevelMode { get; protected set; }
+	private Dictionary<string, LevelComponent> m_components;
+	private Dictionary<string, Func<LevelComponent>> m_componentCreators;
 
 	public Level()
 	{
 		DisabledCells = new List<Point>();
 		ScoreCounter = new ScoreCounter();
+		m_components = new Dictionary<string, LevelComponent> ();
+		m_componentCreators = new Dictionary<string, Func<LevelComponent>> ();
+		RegistryComponent<MoveCounter> ();
 	}
 
-	public virtual void Init()
+	public void RegistryComponent<T>() where T : LevelComponent, new()
 	{
+		m_componentCreators.Add (typeof(T).Name, () => new T ());
+	}
+
+	public T GetComponent<T>() where T : LevelComponent
+	{
+		LevelComponent comp;
+		if (m_components.TryGetValue (typeof(T).Name, out comp)) 
+		{
+			return (T)comp;
+		}
+
+		return null;
 	}
 
 	public virtual void Refresh()
@@ -43,19 +102,10 @@ public class Level
 		Score = 0;
 	}
 
-	public virtual void OnBoardStable( )
-	{ }
-
 	public virtual Coin CoinForIndex(bool init, int index)
 	{
-		return null;
+		return CreateRandomCoin(index);
 	}
-
-	public virtual void OnCoinsSwap (Coin c1, Coin c2)
-	{}
-
-	public virtual void OnCoinMove (Coin c)
-	{ }
 
 	public virtual void OnMatch( List<Coin> coins )
 	{
@@ -79,54 +129,32 @@ public class Level
 
 	public Coin CreateRandomCoin( int index )
 	{
-		return GameController.Instance.map.CreateRandomCoin(index);
+		return GameController.Instance.board.CreateRandomCoin(index);
 	}
 
 	public bool Load(JSONObject obj)
 	{
-		var parser = new JsonParser();
-
-		parser.AddFunc("disabledCells", ((key, ob) =>
+		for ( int i = 0; i < obj.list.Count; ++i )
 		{
-			var pointParser = new JsonParser();
+			string ckey = (string) obj.keys[i];
+			JSONObject j = (JSONObject) obj.list[i];
 
-			pointParser.AddFunc("x", (s, o) =>
+			if (j.type == JSONObject.Type.OBJECT) 
 			{
-				DisabledCells.Last().X = (int)o.n;
-			});
+				Func<LevelComponent> creator;
+				if (m_componentCreators.TryGetValue (ckey, out creator)) 
+				{
+					var comp = creator.Invoke ();
 
-			pointParser.AddFunc("y", (s, o) =>
-			{
-				DisabledCells.Last().Y = (int)o.n;
-			});
+					comp.Init (j);
 
-			pointParser.OnInit = o =>
-			{
-				DisabledCells.Add(new Point());
-			};
-
-			parser.Anonymous = pointParser;
-
-			parser.ParseArray(ob);
-		}));
-
-		parser.AddFunc("time", (key, ob) =>
-		{
-			TotalTime = ob.n;
-		});
-
-		InitParser(parser);
-
-		parser.ParseObject(obj);
+					m_components.Add (ckey, comp);
+				}
+			}
+		}
 
 		return true;
 	}
-
-	public virtual void InitParser(JsonParser parser)
-	{}
-
-	protected virtual void SaveInherit(JSONObject root)
-	{}
 
 	public void Save( JSONObject root )
 	{
@@ -144,8 +172,6 @@ public class Level
 		}
 
 		level.AddField("disabledCells", dc);
-
-		SaveInherit( level );
 
 		root.AddField("level", level);
 	}

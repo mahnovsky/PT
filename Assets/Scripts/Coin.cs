@@ -145,7 +145,7 @@ public class Coin : MonoBehaviour
 
 	public Vector3 GetRealPosition()
 	{
-		Map m = GameController.Instance.map;
+		Map m = GameController.Instance.board;
 		
 		return m.GetRealPosition(Position.X, Position.Y);
 	}
@@ -202,7 +202,7 @@ public class Coin : MonoBehaviour
 			return;
 		}
 
-		Map map = GameController.Instance.map;
+		Map map = GameController.Instance.board;
 		if ( map.Select != null )
 		{
 			map.Select.selector.SetActive ( false );
@@ -228,7 +228,7 @@ public class Coin : MonoBehaviour
 		{
 			return;
 		}
-		Map map = GameController.Instance.map;
+		Map map = GameController.Instance.board;
 		
 		map.Focused = null;
 		if ( map.Select == this )
@@ -249,7 +249,7 @@ public class Coin : MonoBehaviour
 			return;
 		}
 
-		Map map = GameController.Instance.map;
+		Map map = GameController.Instance.board;
 
 		if (map.Focused == this || map.Focused == null)
 		{
@@ -320,7 +320,7 @@ public class Coin : MonoBehaviour
 	{
 		if (m_stateMachine.SetState(eCoinState.Deleted))
 		{
-			Map map = GameController.Instance.map;
+			Map map = GameController.Instance.board;
 			map.RemoveList.Add(this);
 
 			GetComponent<SpriteRenderer>().enabled = false;
@@ -357,7 +357,7 @@ public class Coin : MonoBehaviour
 
 		if (m_delay <= 0 && m_move != null && !m_move.enabled)
 		{
-			Map map = GameController.Instance.map;
+			Map map = GameController.Instance.board;
 
 			m_move.enabled = true;
 		}
@@ -367,7 +367,7 @@ public class Coin : MonoBehaviour
 	{
 		if (m_stateMachine.SetState(eCoinState.Idle))
 		{
-			Map map = GameController.Instance.map;
+			Map map = GameController.Instance.board;
 
 			map.OnMoveDone(this, m_msg);
 		}

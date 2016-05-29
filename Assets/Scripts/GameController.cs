@@ -5,7 +5,7 @@ using System.Collections;
 
 public class GameController : MonoBehaviour
 {
-	public Map				map;
+	public Map				board;
 	public Pointf			designSize;
 	public GameObject		destroyEffect;
 	public GameObject		lighting;
@@ -40,7 +40,7 @@ public class GameController : MonoBehaviour
 	{
 		Instance = this;
 
-		map.Initialize(8, 8);
+		board.Initialize(8, 8);
 		if (CurrentLevel != null && Debug.isDebugBuild)
 		{
 			m_style = new GUIStyle();
@@ -118,9 +118,9 @@ public class GameController : MonoBehaviour
 			
 			if (m_changeCoin == 3)
 			{
-				ClassicLevel cl = CurrentLevel as ClassicLevel;
-
-				cl.MaxMoveCount = p;
+				MoveCounter mc = CurrentLevel.GetComponent<MoveCounter> ();
+				if (mc != null)
+					mc.TotalMoves = p;
 			}
 			if ( m_changeCoin == 4)
 			{
@@ -130,7 +130,7 @@ public class GameController : MonoBehaviour
 			else if (m_changeCoin == 5)
 			{
 				CurrentLevel.DisabledCells.Clear();
-				map.Refresh();
+				board.Refresh();
 			}
 		}
 
@@ -170,8 +170,6 @@ public class GameController : MonoBehaviour
 		}
 
 		CurrentLevel = m_levelLoader.Load( LevelNum );
-
-		CurrentLevel.Init ();
 	}
 
 	public static int LevelNum { get; set; }
@@ -188,7 +186,7 @@ public class GameController : MonoBehaviour
 		{
 			CurrentLevel.DisabledCells.Add(new Point(c.XPos, c.YPos));
 
-			map.Refresh();
+			board.Refresh();
 		}
 	}
 

@@ -8,8 +8,6 @@ public class LevelSaver
 	{
 		JSONObject root = new JSONObject(JSONObject.Type.OBJECT);
 
-		root.AddField("type", level.LevelMode.ToString());
-
 		level.Save(root);
 		string filePath = Application.dataPath + "/Resources/level_" + level.Number + ".json";
 		

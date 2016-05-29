@@ -12,20 +12,9 @@ public class MoveItemLevel : Level
 	int			m_outIndex;
 	Sprite		m_coinSprite;
 
-
-	// Use this for initialization
-	public override void Init ()
-	{
-		LevelMode = Mode.MoveItem;
-		var map = GameController.Instance.map;
-		m_inIndex = map.posToIndex (topInX, map.Height - 1);
-		m_outIndex = map.posToIndex (bottomOutX, 0);
-		m_coinId = GameController.CoinSprites.Length + 1;
-	}
-
 	public override Coin CoinForIndex(bool init, int index)
 	{
-		var map = GameController.Instance.map;
+		var map = GameController.Instance.board;
 		if (init && index == m_inIndex)
 		{
 			Level currLevel = GameController.CurrentLevel;

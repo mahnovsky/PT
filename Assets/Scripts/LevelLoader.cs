@@ -6,29 +6,10 @@ using System.IO;
 public class LevelLoader
 {
 	private Level m_level;
-	private readonly JsonParser m_parser;
 	private bool m_loadStatus;
 	
 	public LevelLoader( )
 	{
-		m_parser = new JsonParser();
-		m_parser.AddFunc("type", (key, obj) =>
-		{
-			Level.Mode mode = (Level.Mode)Enum.Parse(typeof (Level.Mode), obj.str);
-
-			if ( mode == Level.Mode.Classic )
-			{
-				m_level = new ClassicLevel();
-			}
-			else
-			{
-				m_level = new MoveItemLevel();	
-			}
-		});
-		m_parser.AddFunc("level", (key, obj) =>
-		{
-			m_loadStatus = m_level.Load(obj);
-		});
 	}
 
 	public Level Load( int num )
@@ -42,7 +23,9 @@ public class LevelLoader
 		{
 			JSONObject root = new JSONObject(textData.text);
 
-			m_parser.ParseObject(root);
+			m_level = new Level ();
+
+			m_loadStatus = m_level.Load (root);
 
 			if (!m_loadStatus)
 			{
