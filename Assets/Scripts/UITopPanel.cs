@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 using UnityEngine.UI;
+using Assets.Scripts;
 
 public class UITopPanel : MonoBehaviour 
 {
@@ -16,7 +17,9 @@ public class UITopPanel : MonoBehaviour
 		m_levelLabel = levelTransform.GetComponent<Text> ();*/
 
 		var level = GameController.CurrentLevel;
-		level.ScoreCounter.Init( m_scoreLabel );
+		var scoreComp = level.GetComponent<ScoreCounter> ();
+		if (scoreComp != null)
+			scoreComp.SetText( m_scoreLabel );
 
 		m_levelLabel.text = "Level: " + level.Number;
 	}

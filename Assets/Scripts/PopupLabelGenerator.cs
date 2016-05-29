@@ -73,8 +73,6 @@ namespace Assets.Scripts
 			if (Instance == null)
 			{
 				Instance = this;
-
-				DontDestroyOnLoad( gameObject );
 			}
 			else
 			{

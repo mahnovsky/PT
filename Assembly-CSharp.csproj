@@ -45,16 +45,17 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-     <Compile Include="Assets\Electricity\Scripts\LightningBolt.cs" />
+     <Compile Include="Assets\FrameAnimator.cs" />
      <Compile Include="Assets\JSON\JSONObject.cs" />
      <Compile Include="Assets\JSON\JSONTemplates.cs" />
      <Compile Include="Assets\JSON\VectorTemplates.cs" />
+     <Compile Include="Assets\Scripts\Bonus.cs" />
      <Compile Include="Assets\Scripts\Cell.cs" />
-     <Compile Include="Assets\Scripts\ClassicLevel.cs" />
      <Compile Include="Assets\Scripts\Coin.cs" />
      <Compile Include="Assets\Scripts\Effect.cs" />
      <Compile Include="Assets\Scripts\Fps.cs" />
      <Compile Include="Assets\Scripts\GameController.cs" />
+     <Compile Include="Assets\Scripts\GameManager.cs" />
      <Compile Include="Assets\Scripts\JsonParser.cs" />
      <Compile Include="Assets\Scripts\Level.cs" />
      <Compile Include="Assets\Scripts\LevelLoader.cs" />
@@ -62,14 +63,18 @@
      <Compile Include="Assets\Scripts\Map.cs" />
      <Compile Include="Assets\Scripts\MapButton.cs" />
      <Compile Include="Assets\Scripts\Menu.cs" />
-     <Compile Include="Assets\Scripts\MoveItemLevel.cs" />
+     <Compile Include="Assets\Scripts\PopupLabel.cs" />
+     <Compile Include="Assets\Scripts\PopupLabelGenerator.cs" />
+     <Compile Include="Assets\Scripts\Scaler.cs" />
      <Compile Include="Assets\Scripts\SceneTransform.cs" />
+     <Compile Include="Assets\Scripts\ScoreCounter.cs" />
+     <Compile Include="Assets\Scripts\SoundManager.cs" />
+     <Compile Include="Assets\Scripts\UIOption.cs" />
+     <Compile Include="Assets\Scripts\UITopPanel.cs" />
      <Compile Include="Assets\Scripts\Utils\ActionManager.cs" />
      <Compile Include="Assets\Scripts\Utils\Point.cs" />
-     <Compile Include="Assets\UITopPanel.cs" />
      <None Include="Assets\JSON\readme.txt" />
      <None Include="Assets\HOTween\readme.txt" />
-     <None Include="Assets\Electricity\Shaders\lightning.shader" />
  <Reference Include="UnityEngine.UI">
  <HintPath>/Applications/Unity/Unity.app/Contents/UnityExtensions/Unity/GUISystem/UnityEngine.UI.dll</HintPath>
  </Reference>

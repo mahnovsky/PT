@@ -7,7 +7,7 @@ using UnityEngine.UI;
 
 namespace Assets.Scripts
 {
-	public class ScoreCounter
+	public class ScoreCounter : LevelComponent
 	{
 		private readonly float DELAY = 1f;
 		private Text	m_scoreText;
@@ -17,14 +17,19 @@ namespace Assets.Scripts
 		private float	m_currentTime;
 		private float	m_delay;
 
-		public void Init(Text text)
+		public override void Init(JSONObject obj)
+		{
+			m_time = 0.08f;
+			m_currentTime = m_time;
+
+			GameController.Instance.OnUpdate += Update;
+		}
+
+		public void SetText(Text text)
 		{
 			m_scoreText = text;
 
 			text.text = "Score: 0";
-
-			m_time = 0.08f;
-			m_currentTime = m_time;
 		}
 
 		public void AddScore(int score)
@@ -46,7 +51,7 @@ namespace Assets.Scripts
 			{
 				++m_currentScore;
 
-				m_scoreText.text = "Score: " + m_currentScore.ToString();
+				m_scoreText.text = "Score: " + m_currentScore;
 
 				m_currentTime = m_time;
 			}

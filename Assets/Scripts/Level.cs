@@ -13,13 +13,13 @@ public class LevelComponent
 {
 	public virtual void Init (JSONObject obj) {}
 
+	public virtual void Refresh() {}
+
 	public virtual void Free() {}
 }
 
-class MoveCounter : LevelComponent
+public class MoveCounter : LevelComponent
 {
-	private Level m_level;
-
 	public int TotalMoves { get; set; }
 	public int Moves { get; private set; }
 
@@ -47,6 +47,11 @@ class MoveCounter : LevelComponent
 		board.OnCoinsSwap -= OnCoinsSwap;
 	}
 
+	public override void Refresh() 
+	{
+		Moves = TotalMoves;
+	}
+
 	void OnCoinsSwap(Coin c1, Coin c2)
 	{
 		--Moves;
@@ -58,12 +63,62 @@ class MoveCounter : LevelComponent
 	}
 }
 
+public class LevelTimer : LevelComponent
+{
+	private bool m_levelDone;
+	public float TotalTime { get; set; }
+	public float Time { get; private set; }
+
+	public override void Init(JSONObject obj)
+	{
+		GameController.Instance.OnUpdate += Update;
+
+		JSONObject mc = obj.GetField ("time");
+
+		if (mc != null) 
+		{
+			TotalTime = (int)mc.n;
+			Time = TotalTime;
+		}
+
+		GameController.Instance.timeBar.gameObject.SetActive (true);
+
+		m_levelDone = false;
+	}
+
+	public override void Free()
+	{
+		GameController.Instance.OnUpdate -= Update;
+	}
+
+	public override void Refresh() 
+	{
+		Time = TotalTime;
+		m_levelDone = false;
+	}
+		
+	public void Update()
+	{
+		if (!GameManager.Pause)
+			Time -= UnityEngine.Time.deltaTime;
+
+		if (Time <= 0 && !m_levelDone) 
+		{
+			GameController.Instance.OnLevelFail ();
+			m_levelDone = true;
+		}
+		if (!m_levelDone)
+		{
+			GameController.Instance.timeBar.fillAmount = Time / TotalTime;
+		}
+	}
+}
 public class Level
 {
-	public List<Point> DisabledCells { get; set; }
-	public int Number { get; set; }
-	public int Score { get; protected set; }
-	public float TotalTime { get; protected set; }
+	public List<Point> 	DisabledCells { get; set; }
+	public int 			Number { get; set; }
+	public int 			Score { get; protected set; }
+	public float 		TotalTime { get; protected set; }
 
 	public ScoreCounter ScoreCounter { get; set; }
 
@@ -78,7 +133,10 @@ public class Level
 		ScoreCounter = new ScoreCounter();
 		m_components = new Dictionary<string, LevelComponent> ();
 		m_componentCreators = new Dictionary<string, Func<LevelComponent>> ();
+
 		RegistryComponent<MoveCounter> ();
+		RegistryComponent<LevelTimer> ();
+		RegistryComponent<ScoreCounter> ();
 	}
 
 	public void RegistryComponent<T>() where T : LevelComponent, new()
@@ -100,6 +158,11 @@ public class Level
 	public virtual void Refresh()
 	{
 		Score = 0;
+
+		foreach (var comp in m_components) 
+		{
+			comp.Value.Refresh ();
+		}
 	}
 
 	public virtual Coin CoinForIndex(bool init, int index)

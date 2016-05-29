@@ -29,11 +29,12 @@ public class GameController : MonoBehaviour
 	private Texture2D		m_texture;
 	private string			m_number		= "";
 
-	public bool Pause { get; private set; }
+	public System.Action OnUpdate { get; set; }
 
 	void Update( )
 	{
-		CurrentLevel.ScoreCounter.Update();
+		if (OnUpdate != null)
+			OnUpdate.Invoke ();
 	}
 
 	void Awake()
@@ -50,6 +51,8 @@ public class GameController : MonoBehaviour
 		
 		if (!enableCheats)
 			Camera.main.aspect = designSize.X / designSize.Y;
+
+		GameManager.Pause = false;
 	}
 
 	void OnGUI()
@@ -198,12 +201,19 @@ public class GameController : MonoBehaviour
 
 	public void OnLevelFail()
 	{
-		GameManager.Instance.OnEnablePanel(winPanel);
+		GameManager.Instance.OnEnablePanel(failPanel);
 	}
 
 	public void OnLevelWin()
 	{
-		GameManager.Instance.OnEnablePanel(failPanel);	
+		GameManager.Instance.OnEnablePanel(winPanel);	
+	}
+
+	public void Repeat()
+	{
+		CurrentLevel.Refresh();
+
+		GameManager.Instance.OnClosePanel ();
 	}
 
 	public static GameController Instance { get; private set; }
