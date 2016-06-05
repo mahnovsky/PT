@@ -19,9 +19,15 @@ namespace Assets.Scripts
 
 		public override void Init(JSONObject obj)
 		{
-			m_time = 0.08f;
-			m_currentTime = m_time;
+			var stObj = obj.GetField("stepTime");
+			if (stObj != null)
+			{
+				m_time = stObj.n;
 
+				m_currentTime = m_time;
+			}
+
+			m_delay = DELAY;
 			GameController.Instance.OnUpdate += Update;
 		}
 
@@ -39,7 +45,15 @@ namespace Assets.Scripts
 			m_delay = DELAY;
 		}
 
-		public void Update()
+		public override void Refresh()
+		{
+			m_currentScore = 0;
+			m_score = 0;
+			m_delay = DELAY;
+			m_scoreText.text = "Score: 0";
+		}
+
+		void Update()
 		{
 			m_delay -= Time.deltaTime;
 			if (m_delay > 0)

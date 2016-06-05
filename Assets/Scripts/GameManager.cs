@@ -6,9 +6,9 @@ public class GameManager : MonoBehaviour
 {
 	public static GameManager Instance { get; private set; }
 
-	public AudioClip buttonClip;
-	public GameObject shadow;
-	private GameObject m_currentPanel;
+	public		AudioClip		buttonClip;
+	public		GameObject		shadow;
+	private		GameObject		m_currentPanel;
 
 	public String GameDirectory;
 

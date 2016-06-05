@@ -119,8 +119,7 @@ public class Level
 	public int 			Number { get; set; }
 	public int 			Score { get; protected set; }
 	public float 		TotalTime { get; protected set; }
-
-	public ScoreCounter ScoreCounter { get; set; }
+	private bool		m_levelDone = false;
 
 	public Action<int> OnScoreUpdate { get; set; }
 
@@ -130,13 +129,14 @@ public class Level
 	public Level()
 	{
 		DisabledCells = new List<Point>();
-		ScoreCounter = new ScoreCounter();
 		m_components = new Dictionary<string, LevelComponent> ();
 		m_componentCreators = new Dictionary<string, Func<LevelComponent>> ();
 
 		RegistryComponent<MoveCounter> ();
 		RegistryComponent<LevelTimer> ();
 		RegistryComponent<ScoreCounter> ();
+
+		
 	}
 
 	public void RegistryComponent<T>() where T : LevelComponent, new()
@@ -170,10 +170,15 @@ public class Level
 		return CreateRandomCoin(index);
 	}
 
-	public virtual void OnMatch( List<Coin> coins )
+	public void OnMatch( List<Coin> coins )
 	{
 		int total = 5 * coins.Count;
-		ScoreCounter.AddScore(total);
+
+		var scoreComp = GetComponent<ScoreCounter>();
+		if ( scoreComp != null )
+		{
+			scoreComp.AddScore(total);
+		}
 
 		int index = Mathf.FloorToInt( (float)coins.Count / 2 );
 		var pos = Camera.main.WorldToScreenPoint(coins[index].transform.position);

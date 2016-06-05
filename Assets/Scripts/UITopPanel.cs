@@ -10,12 +10,6 @@ public class UITopPanel : MonoBehaviour
 	// Use this for initialization
 	void Start () 
 	{
-		/*var scoreTransform = transform.Find ("Score");
-		var levelTransform = transform.Find ("Level");
-
-		m_scoreLabel = scoreTransform.GetComponent<Text> ();
-		m_levelLabel = levelTransform.GetComponent<Text> ();*/
-
 		var level = GameController.CurrentLevel;
 		var scoreComp = level.GetComponent<ScoreCounter> ();
 		if (scoreComp != null)
