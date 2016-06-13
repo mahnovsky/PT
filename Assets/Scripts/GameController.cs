@@ -5,7 +5,7 @@ using System.Collections;
 
 public class GameController : MonoBehaviour
 {
-	public Map				board;
+	public Board				board;
 	public Pointf			designSize;
 	public GameObject		destroyEffect;
 	public GameObject		lighting;

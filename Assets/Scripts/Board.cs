@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Xml;
 using System;
 
-public class Map : MonoBehaviour
+public class Board : MonoBehaviour
 {
 	public Cell				cellPrefab;
 	public Coin				coinPrefab;
@@ -308,7 +308,7 @@ public class Map : MonoBehaviour
 
 	public Coin CreateRandomCoin(int placeId)
 	{
-		print ("[Map:createRandomCoin]");
+		print ("[Board:createRandomCoin]");
 
 		int maxCoin = GameController.CoinSprites.Length;
 

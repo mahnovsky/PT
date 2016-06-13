@@ -145,7 +145,7 @@ public class Coin : MonoBehaviour
 
 	public Vector3 GetRealPosition()
 	{
-		Map m = GameController.Instance.board;
+		Board m = GameController.Instance.board;
 		
 		return m.GetRealPosition(Position.X, Position.Y);
 	}
@@ -202,23 +202,23 @@ public class Coin : MonoBehaviour
 			return;
 		}
 
-		Map map = GameController.Instance.board;
-		if ( map.Select != null )
+		Board board = GameController.Instance.board;
+		if ( board.Select != null )
 		{
-			map.Select.selector.SetActive ( false );
+			board.Select.selector.SetActive ( false );
 		}
 
-		if (map.Select != null && 
-			map.Select != this && 
-			IsNeighbour(map.Select))
+		if (board.Select != null && 
+			board.Select != this && 
+			IsNeighbour(board.Select))
 		{
-			map.Swap(this, map.Select);
-			map.Select = null;
+			board.Swap(this, board.Select);
+			board.Select = null;
 		}
 		else
 		{
-			map.Select = this;
-			map.Focused = this;
+			board.Select = this;
+			board.Focused = this;
 		}
 	}
 
@@ -228,10 +228,10 @@ public class Coin : MonoBehaviour
 		{
 			return;
 		}
-		Map map = GameController.Instance.board;
+		Board board = GameController.Instance.board;
 		
-		map.Focused = null;
-		if ( map.Select == this )
+		board.Focused = null;
+		if ( board.Select == this )
 		{
 			selector.SetActive(true);
 		}
@@ -249,26 +249,26 @@ public class Coin : MonoBehaviour
 			return;
 		}
 
-		Map map = GameController.Instance.board;
+		Board board = GameController.Instance.board;
 
-		if (map.Focused == this || map.Focused == null)
+		if (board.Focused == this || board.Focused == null)
 		{
 			return;
 		}
 	
-		if (IsNeighbour (map.Focused))
+		if (IsNeighbour (board.Focused))
 		{
-			map.Swap(this, map.Focused);
+			board.Swap(this, board.Focused);
 		}
 		else
 		{
-			map.Focused = null;
+			board.Focused = null;
 		}
 
-		if ( map.Select != null )
+		if ( board.Select != null )
 		{
-			map.Select.selector.SetActive ( false );
-			map.Select = null;
+			board.Select.selector.SetActive ( false );
+			board.Select = null;
 		}
 	}
 
@@ -320,8 +320,8 @@ public class Coin : MonoBehaviour
 	{
 		if (m_stateMachine.SetState(eCoinState.Deleted))
 		{
-			Map map = GameController.Instance.board;
-			map.RemoveList.Add(this);
+			Board board = GameController.Instance.board;
+			board.RemoveList.Add(this);
 
 			GetComponent<SpriteRenderer>().enabled = false;
 			GetComponent<BoxCollider2D>().enabled = false;
@@ -357,7 +357,7 @@ public class Coin : MonoBehaviour
 
 		if (m_delay <= 0 && m_move != null && !m_move.enabled)
 		{
-			Map map = GameController.Instance.board;
+			Board board = GameController.Instance.board;
 
 			m_move.enabled = true;
 		}
@@ -367,9 +367,9 @@ public class Coin : MonoBehaviour
 	{
 		if (m_stateMachine.SetState(eCoinState.Idle))
 		{
-			Map map = GameController.Instance.board;
+			Board board = GameController.Instance.board;
 
-			map.OnMoveDone(this, m_msg);
+			board.OnMoveDone(this, m_msg);
 		}
 	}
 
