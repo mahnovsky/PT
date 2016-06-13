@@ -252,7 +252,7 @@ public class Board : MonoBehaviour
 
 		if (TrySwap (c1, c2))
 		{
-			applySwap(c1, c2);
+			ApplySwap(c1, c2);
 			print ("create move coins");
 			//Coin cid = c1.PlaceId < c2.PlaceId ? c1 : c2;
 
@@ -296,7 +296,7 @@ public class Board : MonoBehaviour
 		return res;
 	}
 
-	private void applySwap(Coin c1, Coin c2)
+	private void ApplySwap(Coin c1, Coin c2)
 	{
 		Point pos = c1.Position;
 		c1.UpdateLoc (c2.PlaceId, c2.XPos, c2.YPos);

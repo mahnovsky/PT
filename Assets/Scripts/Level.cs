@@ -1,34 +1,17 @@
 using System;
 using UnityEngine;
-using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
-using System.Security.Cryptography.X509Certificates;
 using Assets;
 using Assets.Scripts;
-using UnityEngine.Assertions;
-using UnityEngine.UI;
+using Assets.Scripts.Utils;
 
-public class LevelComponent
-{
-	public virtual void Init (JSONObject obj) {}
-
-	public virtual void Refresh() {}
-
-	public virtual void Free() {}
-}
-
-public class MoveCounter : LevelComponent
+public class MoveCounter : EntityComponent
 {
 	public int TotalMoves { get; set; }
 	public int Moves { get; private set; }
 
-	public override void Init(JSONObject obj)
+	public override void Load( JSONObject obj )
 	{
-		var board = GameController.Instance.board;
-
-		board.OnCoinsSwap += OnCoinsSwap;
-
 		JSONObject mc = obj.GetField ("moveCount");
 
 		if (mc != null) 
@@ -36,6 +19,13 @@ public class MoveCounter : LevelComponent
 			TotalMoves = (int)mc.n;
 			Moves = TotalMoves;
 		}
+	}
+
+	public override void Init()
+	{
+		var board = GameController.Instance.board;
+
+		board.OnCoinsSwap += OnCoinsSwap;
 
 		Debug.Log ("Hello From MoveCounter");
 	}
@@ -63,16 +53,19 @@ public class MoveCounter : LevelComponent
 	}
 }
 
-public class LevelTimer : LevelComponent
+public class LevelTimer : EntityComponent
 {
 	private bool m_levelDone;
 	public float TotalTime { get; set; }
 	public float Time { get; private set; }
 
-	public override void Init(JSONObject obj)
+	public void OnMatch( List<Coin> coins )
 	{
-		GameController.Instance.OnUpdate += Update;
+		Time += coins.Count * 0.2f;
+	}
 
+	public override void Load( JSONObject obj )
+	{
 		JSONObject mc = obj.GetField ("time");
 
 		if (mc != null) 
@@ -80,6 +73,12 @@ public class LevelTimer : LevelComponent
 			TotalTime = (int)mc.n;
 			Time = TotalTime;
 		}
+	}
+
+	public override void Init()
+	{
+		GameController.Instance.OnUpdate += Update;
+		GameController.Instance.board.OnMatch += OnMatch;
 
 		GameController.Instance.timeBar.gameObject.SetActive (true);
 
@@ -89,6 +88,7 @@ public class LevelTimer : LevelComponent
 	public override void Free()
 	{
 		GameController.Instance.OnUpdate -= Update;
+		GameController.Instance.board.OnMatch -= OnMatch;
 	}
 
 	public override void Refresh() 
@@ -113,7 +113,28 @@ public class LevelTimer : LevelComponent
 		}
 	}
 }
-public class Level
+
+public class LevelSound : EntityComponent
+{
+	void OnCoinsSwap(Coin c1, Coin c2)
+	{
+		var clip = GameManager.Instance.swapSound;
+
+		SoundManager.Instance.PlaySound(clip);
+	}
+
+	public override void Init( )
+	{
+		GameController.Instance.board.OnCoinsSwap += OnCoinsSwap;
+	}
+
+	public override void Free()
+	{
+		GameController.Instance.board.OnCoinsSwap -= OnCoinsSwap;
+	}
+}
+
+public class Level : Entity
 {
 	public List<Point> 	DisabledCells { get; set; }
 	public int 			Number { get; set; }
@@ -123,46 +144,21 @@ public class Level
 
 	public Action<int> OnScoreUpdate { get; set; }
 
-	private Dictionary<string, LevelComponent> m_components;
-	private Dictionary<string, Func<LevelComponent>> m_componentCreators;
-
-	public Level()
+	public Level() : base()
 	{
 		DisabledCells = new List<Point>();
-		m_components = new Dictionary<string, LevelComponent> ();
-		m_componentCreators = new Dictionary<string, Func<LevelComponent>> ();
 
 		RegistryComponent<MoveCounter> ();
 		RegistryComponent<LevelTimer> ();
 		RegistryComponent<ScoreCounter> ();
-
-		
+		AddComponent<LevelSound>();
 	}
 
-	public void RegistryComponent<T>() where T : LevelComponent, new()
-	{
-		m_componentCreators.Add (typeof(T).Name, () => new T ());
-	}
-
-	public T GetComponent<T>() where T : LevelComponent
-	{
-		LevelComponent comp;
-		if (m_components.TryGetValue (typeof(T).Name, out comp)) 
-		{
-			return (T)comp;
-		}
-
-		return null;
-	}
-
-	public virtual void Refresh()
+	public override void Refresh()
 	{
 		Score = 0;
 
-		foreach (var comp in m_components) 
-		{
-			comp.Value.Refresh ();
-		}
+		base.Refresh();
 	}
 
 	public virtual Coin CoinForIndex(bool init, int index)
@@ -170,58 +166,9 @@ public class Level
 		return CreateRandomCoin(index);
 	}
 
-	public void OnMatch( List<Coin> coins )
-	{
-		int total = 5 * coins.Count;
-
-		var scoreComp = GetComponent<ScoreCounter>();
-		if ( scoreComp != null )
-		{
-			scoreComp.AddScore(total);
-		}
-
-		int index = Mathf.FloorToInt( (float)coins.Count / 2 );
-		var pos = Camera.main.WorldToScreenPoint(coins[index].transform.position);
-		PopupLabelGenerator.Instance.Print(
-			total.ToString(), pos, Vector2.up * 100, 2f, 1f);
-
-		if (coins.Count == 4)
-		{
-			var fa = coins[index].transform.GetComponentsInChildren<FrameAnimator>(true);
-			foreach (var frameAnimator in fa)
-			{
-				frameAnimator.gameObject.SetActive(true);
-			}
-		}
-	}
-
 	public Coin CreateRandomCoin( int index )
 	{
 		return GameController.Instance.board.CreateRandomCoin(index);
-	}
-
-	public bool Load(JSONObject obj)
-	{
-		for ( int i = 0; i < obj.list.Count; ++i )
-		{
-			string ckey = (string) obj.keys[i];
-			JSONObject j = (JSONObject) obj.list[i];
-
-			if (j.type == JSONObject.Type.OBJECT) 
-			{
-				Func<LevelComponent> creator;
-				if (m_componentCreators.TryGetValue (ckey, out creator)) 
-				{
-					var comp = creator.Invoke ();
-
-					comp.Init (j);
-
-					m_components.Add (ckey, comp);
-				}
-			}
-		}
-
-		return true;
 	}
 
 	public void Save( JSONObject root )

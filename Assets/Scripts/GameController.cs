@@ -2,10 +2,11 @@ using System;
 using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
+using Assets.Scripts.Utils;
 
 public class GameController : MonoBehaviour
 {
-	public Board				board;
+	public Board			board;
 	public Pointf			designSize;
 	public GameObject		destroyEffect;
 	public GameObject		lighting;
@@ -23,13 +24,12 @@ public class GameController : MonoBehaviour
 
 	int						m_changeCoin	= 0;
 	int						m_currentCoin	= 0;
-	private LevelLoader		m_levelLoader;
 	private LevelSaver		m_levelSaver;
 	private Sprite			m_currSprite;
 	private Texture2D		m_texture;
 	private string			m_number		= "";
 
-	public System.Action OnUpdate { get; set; }
+	public Action OnUpdate { get; set; }
 
 	void Update( )
 	{
@@ -102,7 +102,7 @@ public class GameController : MonoBehaviour
 
 		if (GUI.Button (new Rect (0, 80, 100, 50), m_texture))
 		{
-			int max = GameController.CoinSprites.Length;
+			int max = CoinSprites.Length;
 			if(m_currentCoin  + 1 < max)
 			{
 				++m_currentCoin;
@@ -156,23 +156,21 @@ public class GameController : MonoBehaviour
 
 	public void InitLevel()
 	{
-		if ( m_levelLoader == null )
-		{
-			m_levelLoader = new LevelLoader();
-		}
-
 		if (LevelNum <= 0)
 		{
 			LevelNum = 1;
 		}
 
-		if ( CurrentLevel != null && LevelNum == CurrentLevel.Number )
-		{
-			CurrentLevel.Refresh();
-			return;
-		}
+		string levelFile = "level_" + LevelNum;
+		string gameDir = GameManager.Instance.GameDirectory;
+		JSONObject jsonObject = TextLoader.GetFileAsJson(gameDir, levelFile);
+		
+		CurrentLevel = new Level()
+		{ 
+			Number = LevelNum
+		};
 
-		CurrentLevel = m_levelLoader.Load( LevelNum );
+		CurrentLevel.Load( jsonObject );
 	}
 
 	public static int LevelNum { get; set; }
@@ -214,6 +212,12 @@ public class GameController : MonoBehaviour
 		CurrentLevel.Refresh();
 
 		GameManager.Instance.OnClosePanel ();
+	}
+
+	public void OnSceneSwap( )
+	{
+		CurrentLevel.Free();
+		CurrentLevel = null;
 	}
 
 	public static GameController Instance { get; private set; }

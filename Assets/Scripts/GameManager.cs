@@ -8,6 +8,8 @@ public class GameManager : MonoBehaviour
 
 	public		AudioClip		buttonClip;
 	public		GameObject		shadow;
+	public		AudioClip		swapSound;
+
 	private		GameObject		m_currentPanel;
 
 	public String GameDirectory;
@@ -63,6 +65,9 @@ public class GameManager : MonoBehaviour
 	{
 		PlayButtonSound();
 
+		if (GameController.Instance != null)
+			GameController.Instance.OnSceneSwap();
+
 		Application.LoadLevel(nextScene);
 	}
 
@@ -71,6 +76,9 @@ public class GameManager : MonoBehaviour
 		PlayButtonSound();
 
 		GameDirectory = gameDir;
+
+		if (GameController.Instance != null)
+			GameController.Instance.OnSceneSwap();
 
 		Application.LoadLevel("Game");
 	}

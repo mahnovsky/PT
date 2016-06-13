@@ -1,13 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using Assets.Scripts.Utils;
 using UnityEngine;
 using UnityEngine.UI;
 
 namespace Assets.Scripts
 {
-	public class ScoreCounter : LevelComponent
+	public class ScoreCounter : EntityComponent
 	{
 		private readonly float DELAY = 1f;
 		private Text	m_scoreText;
@@ -17,7 +16,18 @@ namespace Assets.Scripts
 		private float	m_currentTime;
 		private float	m_delay;
 
-		public override void Init(JSONObject obj)
+		public void OnMatch(List<Coin> coins)
+		{
+			int total = 5 * coins.Count;
+			AddScore ( total );
+
+			int index = Mathf.FloorToInt ( ( float )coins.Count / 2 );
+			var pos = Camera.main.WorldToScreenPoint ( coins[index].transform.position );
+			PopupLabelGenerator.Instance.Print (
+				total.ToString ( ), pos, Vector2.up * 100, 2f, 1f );
+		}
+
+		public override void Load( JSONObject obj )
 		{
 			var stObj = obj.GetField("stepTime");
 			if (stObj != null)
@@ -26,9 +36,13 @@ namespace Assets.Scripts
 
 				m_currentTime = m_time;
 			}
+		}
 
+		public override void Init()
+		{
 			m_delay = DELAY;
 			GameController.Instance.OnUpdate += Update;
+			GameController.Instance.board.OnMatch += OnMatch;
 		}
 
 		public void SetText(Text text)
@@ -51,6 +65,12 @@ namespace Assets.Scripts
 			m_score = 0;
 			m_delay = DELAY;
 			m_scoreText.text = "Score: 0";
+		}
+
+		public override void Free( )
+		{
+			GameController.Instance.OnUpdate -= Update;
+			GameController.Instance.board.OnMatch -= OnMatch;
 		}
 
 		void Update()
