@@ -1,16 +1,50 @@
 ﻿using UnityEngine;
 using System.Collections;
+using Assets.Scripts;
 
-public class Menu : MonoBehaviour
-{ 
-	// Use this for initialization
-	public void OnGameLoad ()
+namespace Assets.Scripts
+{
+	public class Menu : MonoBehaviour, IScene
 	{
-		Application.LoadLevel("Game");
-	}
+		private GameManager m_manager;
 
-	public void OnArcadeClick( )
-	{
-		Application.LoadLevel("LevelsList");
+		public void Init( )
+		{
+			m_manager = GameManager.Instance;
+
+			gameObject.SetActive ( true );
+		}
+
+		public void Free( )
+		{
+			gameObject.SetActive ( false );
+		}
+
+		public void OnButtonPress( string name )
+		{
+			m_manager.GameDirectory = name;
+
+			if ( name == "Arcade" )
+			{
+			}
+			else if ( name == "Time" )
+			{
+				m_manager.RunScene<GameUI> (SceneMove.Left);
+			}
+			else if (name == "OtherGames")
+			{
+				
+			}
+		}
+
+		public bool IsLoaded()
+		{
+			return enabled;
+		}
+
+		public GameObject GetObject()
+		{
+			return gameObject;
+		}
 	}
 }

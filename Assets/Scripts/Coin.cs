@@ -9,12 +9,15 @@ public class StateMachine<T>
 {
 	public T CurrentState { get; private set; }
 
+	public object UserData { get; private set; }
+
 	private Dictionary<T, List<T>> m_stateToState;
 
-	public Action<T, T> OnStateChange { get; set; } 
+	public Action<StateMachine<T>,T, T> OnStateChange { get; set; } 
 
-	public StateMachine(T defaultState)
+	public StateMachine(T defaultState, object userData)
 	{
+		UserData = userData;
 		CurrentState = defaultState;
 		m_stateToState = new Dictionary<T, List<T>>();
 	} 
@@ -33,7 +36,7 @@ public class StateMachine<T>
 			{
 				if (state1.Equals(state))
 				{
-					OnStateChange(CurrentState, state);
+					OnStateChange(this, CurrentState, state);
 					CurrentState = state;
 					
 					return true;
@@ -55,12 +58,23 @@ public enum eCoinState
 
 public class Coin : MonoBehaviour
 {
-	public static float coinWidth	= 200f * 0.01f;
-	public static float coinHeight	= 200f * 0.01f;
-	public static float border		= 5f * 0.01f;
-	private GameObject m_effect;
-	private StateMachine<eCoinState> m_stateMachine;
+	public static float coinWidth	= 100f * 0.01f;
+	public static float coinHeight	= 100f * 0.01f;
+	public static float border		= 2f * 0.01f;
+	private ParticleSystem m_effect;
 	public GameObject selector;
+
+	private StateMachine<eCoinState> m_stateMachine;
+	private float		m_delay;
+	private Tweener		m_move;
+	private eCoinState	m_state;
+	private int			m_coinId;
+	private int			m_placeId;
+	private int			m_x;
+	private int			m_y;
+	private bool		m_deleted;
+	private bool		m_disabled = false;
+	private string		m_msg;
 
 	public StateMachine<eCoinState> StateMachine
 	{
@@ -84,7 +98,7 @@ public class Coin : MonoBehaviour
 		spriteRenderer.enabled = true;
 		GetComponent<BoxCollider2D> ().enabled = true;
 		RefreshPosition ();
-		m_stateMachine = new StateMachine<eCoinState>(eCoinState.Idle);
+		m_stateMachine = new StateMachine<eCoinState>(eCoinState.Idle, this);
 
 		m_stateMachine.AddState(eCoinState.Idle, 
 			new List<eCoinState> { eCoinState.Moved, eCoinState.MarkDelete });
@@ -97,9 +111,15 @@ public class Coin : MonoBehaviour
 
 		m_stateMachine.AddState(eCoinState.Deleted, 
 			new List<eCoinState> { eCoinState.Idle });
-		/*Vector2 size = sp.bounds.size;
+	}
 
-		transform.localScale = new Vector3(coinWidth / size.x, coinHeight / size.y);*/
+	public void OnSpawn(Vector3 spawnOffset, float delay)
+	{
+		Vector3 pos = GetRealPosition();
+		pos.y = spawnOffset.y;
+		transform.localPosition = pos;
+		var board = GameController.Instance.board;
+		MoveToSpeedBased(GetRealPosition(), delay, board.dropSpeed, "drop");
 	}
 
 	public void ChangeCoinId(int nId)
@@ -272,14 +292,15 @@ public class Coin : MonoBehaviour
 		}
 	}
 
+	private Vector3 m_nextPos;
 	public void MoveTo(Vector3 pos, float delay, string msg)
 	{
 		if (m_stateMachine.SetState(eCoinState.Moved))
 		{
 			m_move = HOTween.To(transform, delay, new TweenParms()
 				.Prop("localPosition", pos)
-				.Ease(EaseType.EaseInOutQuad)
-				.OnStepComplete(onActionDone));
+				.Ease(EaseType.Linear)
+				.OnComplete(OnActionDone));
 
 			m_msg = msg;
 
@@ -287,14 +308,15 @@ public class Coin : MonoBehaviour
 		}
 	}
 
-	public void MoveToSpeedBased(Vector3 pos, float speed, string msg)
+	public void MoveToSpeedBased(Vector3 pos, float delay, float speed, string msg)
 	{
 		if (m_stateMachine.SetState(eCoinState.Moved))
 		{
 			m_move = HOTween.To(transform, speed, new TweenParms()
 				.Prop("localPosition", pos).SpeedBased() // Position tween (set as relative)
-				.Ease(EaseType.EaseInOutQuad) // Ease
-				.OnStepComplete(onActionDone));
+				.Ease(EaseType.Linear) // Ease
+				.Delay(delay)
+				.OnComplete(OnActionDone));
 
 			m_msg = msg;
 
@@ -313,7 +335,16 @@ public class Coin : MonoBehaviour
 		GameObject effect = GameController.Instance.destroyEffect;
 		Vector3 pos = transform.position;
 		pos.z = -5;
-		m_effect = Instantiate(effect, pos, Quaternion.identity) as GameObject;
+		if (m_effect == null)
+		{
+			var particleGo = Instantiate(effect, pos, Quaternion.identity) as GameObject;
+			m_effect = particleGo.GetComponent<ParticleSystem>();
+		}
+		else
+		{
+			m_effect.time = 0;
+			m_effect.Play();
+		}
 	}
 
 	public void Destroy()
@@ -331,13 +362,6 @@ public class Coin : MonoBehaviour
 				m_move.Kill();
 
 				m_move = null;
-			}
-
-			if (m_effect != null)
-			{
-				Destroy(m_effect);
-
-				m_effect = null;
 			}
 		}
 	}
@@ -357,13 +381,11 @@ public class Coin : MonoBehaviour
 
 		if (m_delay <= 0 && m_move != null && !m_move.enabled)
 		{
-			Board board = GameController.Instance.board;
-
 			m_move.enabled = true;
 		}
 	}
 
-	public void onActionDone()
+	public void OnActionDone()
 	{
 		if (m_stateMachine.SetState(eCoinState.Idle))
 		{
@@ -378,15 +400,4 @@ public class Coin : MonoBehaviour
 		get { return m_disabled; }
 		set { m_disabled = value; }
 	}
-
-	private float m_delay;
-	private Tweener m_move;
-	private eCoinState m_state;
-	private int m_coinId;
-	private int m_placeId;
-	private int m_x;
-	private int m_y;
-	private bool m_deleted;
-	private bool m_disabled = false;
-	private string m_msg;
 }

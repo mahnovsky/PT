@@ -7,6 +7,7 @@ public class UITopPanel : MonoBehaviour
 {
 	public Text m_scoreLabel;
 	public Text m_levelLabel;
+
 	// Use this for initialization
 	void Start () 
 	{

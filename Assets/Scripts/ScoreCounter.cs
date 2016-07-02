@@ -22,7 +22,7 @@ namespace Assets.Scripts
 			AddScore ( total );
 
 			int index = Mathf.FloorToInt ( ( float )coins.Count / 2 );
-			var pos = Camera.main.WorldToScreenPoint ( coins[index].transform.position );
+			var pos = coins[index].transform.position;//Camera.main.WorldToScreenPoint (  );
 			PopupLabelGenerator.Instance.Print (
 				total.ToString ( ), pos, Vector2.up * 100, 2f, 1f );
 		}

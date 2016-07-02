@@ -1,6 +1,20 @@
 ﻿using System;
 using UnityEngine;
-using System.Collections;
+using Holoville.HOTween;
+using Assets.Scripts;
+
+public interface IScene
+{
+	void OnButtonPress(string name);
+
+	void Init();
+
+	void Free();
+
+	bool IsLoaded();
+
+	GameObject GetObject();
+}
 
 public class GameManager : MonoBehaviour
 {
@@ -9,12 +23,15 @@ public class GameManager : MonoBehaviour
 	public		AudioClip		buttonClip;
 	public		GameObject		shadow;
 	public		AudioClip		swapSound;
-
-	private		GameObject		m_currentPanel;
-
-	public String GameDirectory;
+	public		GameObject		canvas;
+	public		LoadScreen		loadScreen;
+	public		Pointf			designSize;
+	public		String			GameDirectory;
 
 	public static bool Pause { get; set; }
+	private		IScene			m_scene;
+	private		IScene			m_currentScene;
+	private		GameObject		m_currentPanel;
 
 	void Awake ()
 	{
@@ -25,10 +42,45 @@ public class GameManager : MonoBehaviour
 			Pause = false;
 
 			DontDestroyOnLoad(gameObject);
+			
+			Camera.main.aspect = designSize.X / designSize.Y;
+
+			HOTween.Init(false, false, true);
+
+			RunScene<Menu>(SceneMove.Left);
 		}
 		else
 		{
 			Destroy(gameObject);
+		}
+	}
+
+	public void OnButtonPress( string name )
+	{
+		PlayButtonSound();
+
+		if (m_currentScene != null)
+			m_currentScene.OnButtonPress(name);
+	}
+
+	public void OnSceneLoaded( )
+	{
+		m_currentScene = loadScreen.Scene;
+	}
+
+	public void RunScene<T>(SceneMove move = SceneMove.None) where T : class, IScene 
+	{
+		var types = canvas.GetComponentsInChildren(typeof(T), true);
+		var scene = types[0] as T;
+		if (scene != null)
+		{
+			loadScreen.LoadScene(scene, move);
+
+			if (m_currentScene != null)
+			{
+				m_currentScene.Free();
+				m_currentScene = null;
+			}
 		}
 	}
 
@@ -39,8 +91,6 @@ public class GameManager : MonoBehaviour
 
 	public void OnEnablePanel( GameObject panel )
 	{
-		PlayButtonSound();
-
 		panel.SetActive(true);
 		shadow.SetActive(true);
 
@@ -51,24 +101,12 @@ public class GameManager : MonoBehaviour
 
 	public void OnClosePanel( )
 	{
-		PlayButtonSound();
-
 		m_currentPanel.SetActive(false);
 		shadow.SetActive(false);
 
 		m_currentPanel = null;
 
 		Pause = false;
-	}
-
-	public void OnSwapScene( string nextScene )
-	{
-		PlayButtonSound();
-
-		if (GameController.Instance != null)
-			GameController.Instance.OnSceneSwap();
-
-		Application.LoadLevel(nextScene);
 	}
 
 	public void OnGameLoad (string gameDir)

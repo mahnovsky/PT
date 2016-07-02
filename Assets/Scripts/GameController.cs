@@ -3,11 +3,11 @@ using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
 using Assets.Scripts.Utils;
+using Holoville.HOTween;
 
 public class GameController : MonoBehaviour
 {
-	public Board			board;
-	public Pointf			designSize;
+	public Board			board;	
 	public GameObject		destroyEffect;
 	public GameObject		lighting;
 	public Sprite[]			coinSprites;
@@ -48,9 +48,6 @@ public class GameController : MonoBehaviour
 
 			m_style.fontSize = 16;
 		}
-		
-		if (!enableCheats)
-			Camera.main.aspect = designSize.X / designSize.Y;
 
 		GameManager.Pause = false;
 	}
