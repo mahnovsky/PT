@@ -58,9 +58,6 @@ public enum eCoinState
 
 public class Coin : MonoBehaviour
 {
-	public static float coinWidth	= 100f * 0.01f;
-	public static float coinHeight	= 100f * 0.01f;
-	public static float border		= 2f * 0.01f;
 	private ParticleSystem m_effect;
 	public GameObject selector;
 

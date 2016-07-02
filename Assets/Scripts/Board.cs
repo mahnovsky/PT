@@ -114,7 +114,7 @@ public class Board : MonoBehaviour
 	{
 		print ("map init w, h: " + w + ", " + h);
 		m_lines = new int[w];
-		float realCoinW = Cell.Width;
+		float realCoinW = Cell.Width ;
 		float realCoinH = Cell.Height;
 
 		m_size = new Vector2 (w * realCoinW, h * realCoinH);
@@ -143,7 +143,7 @@ public class Board : MonoBehaviour
 
 		if (delta > 0) 
 		{
-			hh += (delta * 40f);
+			hh += (delta * 0.4f);
 		}
 
 		transform.localPosition = new Vector2(-hw, -hh);
