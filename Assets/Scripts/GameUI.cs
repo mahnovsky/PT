@@ -13,8 +13,7 @@ namespace Assets.Scripts
 		public void Init( )
 		{
 			m_manager = GameManager.Instance;
-
-			//controller.gameObject.SetActive(true);
+			
 			gameObject.SetActive(true);
 		}
 
@@ -23,12 +22,21 @@ namespace Assets.Scripts
 			gameObject.SetActive(false);
 		}
 
-		public void OnButtonPress( string name )
+		public void OnButtonPress( string cmd )
 		{
-			if (name == "MainMenu")
+			if (cmd == "MainMenu")
 			{
 				m_manager.RunScene<Menu>(SceneMove.Right);
 				GameController.CurrentLevel.Refresh();
+				m_manager.OnClosePanel();
+			}
+			else if (cmd == "Repeat")
+			{
+				GameController.Instance.Repeat();
+			}
+			else if (cmd == "Continue")
+			{
+				GameController.Instance.OnNextLevel();
 				m_manager.OnClosePanel();
 			}
 		}

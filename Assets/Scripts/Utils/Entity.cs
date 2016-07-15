@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -14,6 +14,16 @@ namespace Assets.Scripts.Utils
 		{
 			m_components = new Dictionary<string, EntityComponent>();
 			m_componentCreators = new Dictionary<string, Func<EntityComponent>>();
+		}
+
+		public void Init( )
+		{
+			foreach (var pair in m_components)
+			{
+				pair.Value.Init (this);
+
+				pair.Value.Start();
+			}
 		}
 
 		public void RegistryComponent<T>( ) where T : EntityComponent, new()
@@ -35,7 +45,7 @@ namespace Assets.Scripts.Utils
 		public void AddComponent<T>() where T : EntityComponent, new()
 		{
 			EntityComponent comp = new T();
-			comp.Init();
+			comp.Init(this);
 			m_components.Add ( typeof(T).Name, comp );
 		}
 
@@ -70,7 +80,6 @@ namespace Assets.Scripts.Utils
 						var comp = creator.Invoke ( );
 
 						comp.Load(j);
-						comp.Init ( );
 
 						m_components.Add ( ckey, comp );
 					}

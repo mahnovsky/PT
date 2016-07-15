@@ -2,6 +2,7 @@ using System;
 using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
+using Assets.Scripts;
 using Assets.Scripts.Utils;
 using Holoville.HOTween;
 
@@ -29,7 +30,8 @@ public class GameController : MonoBehaviour
 	private Texture2D		m_texture;
 	private string			m_number		= "";
 
-	public Action OnUpdate { get; set; }
+	public event Action OnUpdate;
+	public LevelList LevelList { get; private set; }
 
 	void Update( )
 	{
@@ -40,6 +42,8 @@ public class GameController : MonoBehaviour
 	void Awake()
 	{
 		Instance = this;
+		LevelList = new LevelList();
+		InitLevel();
 
 		board.Initialize(8, 8);
 		if (CurrentLevel != null && Debug.isDebugBuild)
@@ -129,7 +133,10 @@ public class GameController : MonoBehaviour
 			}
 			else if (m_changeCoin == 5)
 			{
-				CurrentLevel.DisabledCells.Clear();
+				var cells = CurrentLevel.GetComponent<CellsInfo>();
+				if (cells != null && cells.Disabled != null)
+					cells.Disabled.Clear();
+
 				board.Refresh();
 			}
 		}
@@ -158,16 +165,10 @@ public class GameController : MonoBehaviour
 			LevelNum = 1;
 		}
 
-		string levelFile = "level_" + LevelNum;
-		string gameDir = GameManager.Instance.GameDirectory;
-		JSONObject jsonObject = TextLoader.GetFileAsJson(gameDir, levelFile);
-		
-		CurrentLevel = new Level()
-		{ 
-			Number = LevelNum
-		};
+		if(CurrentLevel != null)
+			CurrentLevel.Free();
 
-		CurrentLevel.Load( jsonObject );
+		CurrentLevel = LevelList.GetLevel(LevelNum);
 	}
 
 	public static int LevelNum { get; set; }
@@ -182,16 +183,18 @@ public class GameController : MonoBehaviour
 		}
 		else if (m_changeCoin == 2)
 		{
-			CurrentLevel.DisabledCells.Add(new Point(c.XPos, c.YPos));
-
+			var cells = CurrentLevel.GetComponent<CellsInfo>();
+			if (cells != null && cells.Disabled != null)
+				cells.Disabled.Add(new Point(c.XPos, c.YPos));
 			board.Refresh();
 		}
 	}
 
-	public void OnNextLevelBtn()
+	public void OnNextLevel()
 	{
 		++LevelNum;
-		Application.LoadLevel("Game");
+		InitLevel();
+		board.Refresh();
 	}
 
 	public void OnLevelFail()
@@ -207,7 +210,7 @@ public class GameController : MonoBehaviour
 	public void Repeat()
 	{
 		CurrentLevel.Refresh();
-
+		board.Refresh();
 		GameManager.Instance.OnClosePanel ();
 	}
 

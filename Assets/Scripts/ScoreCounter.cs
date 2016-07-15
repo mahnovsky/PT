@@ -9,22 +9,28 @@ namespace Assets.Scripts
 	public class ScoreCounter : EntityComponent
 	{
 		private readonly float DELAY = 1f;
-		private Text	m_scoreText;
 		private int		m_currentScore;
 		private int		m_score;
 		private float	m_time;
 		private float	m_currentTime;
 		private float	m_delay;
 
+		public event Action<int> OnScoreChange; 
+
+		public int Score
+		{
+			get { return m_score; }
+		}
+
 		public void OnMatch(List<Coin> coins)
 		{
-			int total = 5 * coins.Count;
+			int total = (coins.Count - 2) * 50;
 			AddScore ( total );
 
 			int index = Mathf.FloorToInt ( ( float )coins.Count / 2 );
-			var pos = coins[index].transform.position;//Camera.main.WorldToScreenPoint (  );
+			var pos = coins[index].transform.position ;
 			PopupLabelGenerator.Instance.Print (
-				total.ToString ( ), pos, Vector2.up * 100, 2f, 1f );
+				total.ToString ( ), pos, Vector2.up, 2f, 1f );
 		}
 
 		public override void Load( JSONObject obj )
@@ -38,18 +44,13 @@ namespace Assets.Scripts
 			}
 		}
 
-		public override void Init()
+		public override void Start()
 		{
 			m_delay = DELAY;
 			GameController.Instance.OnUpdate += Update;
 			GameController.Instance.board.OnMatch += OnMatch;
-		}
 
-		public void SetText(Text text)
-		{
-			m_scoreText = text;
-
-			text.text = "Score: 0";
+			Refresh();
 		}
 
 		public void AddScore(int score)
@@ -64,13 +65,15 @@ namespace Assets.Scripts
 			m_currentScore = 0;
 			m_score = 0;
 			m_delay = DELAY;
-			m_scoreText.text = "Score: 0";
+
+			if (OnScoreChange != null)
+				OnScoreChange.Invoke(m_currentScore);
 		}
 
 		public override void Free( )
 		{
-			GameController.Instance.OnUpdate -= Update;
-			GameController.Instance.board.OnMatch -= OnMatch;
+			GameController.Instance.OnUpdate		-= Update;
+			GameController.Instance.board.OnMatch	-= OnMatch;
 		}
 
 		void Update()
@@ -85,7 +88,8 @@ namespace Assets.Scripts
 			{
 				++m_currentScore;
 
-				m_scoreText.text = "Score: " + m_currentScore;
+				if (OnScoreChange != null)
+					OnScoreChange.Invoke(m_currentScore);
 
 				m_currentTime = m_time;
 			}

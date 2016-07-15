@@ -1,8 +1,7 @@
 using UnityEngine;
 using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Security.Cryptography.X509Certificates;
+using Assets.Scripts;
+using Holoville.HOTween;
 
 
 public enum NeighbourPos
@@ -18,6 +17,9 @@ public class Cell : MonoBehaviour
 {
 	public static readonly float Width = 75;
 	public static readonly float Height = 75;
+	public Sprite[] GoalWindows;
+	public SpriteRenderer GoalRenderer;
+	private int m_goalLevel;
 
 	public void Init(int index, Point pos, bool empty)
 	{
@@ -33,7 +35,57 @@ public class Cell : MonoBehaviour
 		if (two)
 		{
 			var render = GetComponent<SpriteRenderer>();
-			render.color = new Color(0, 0, 0, 100f / 255);
+			render.color = new Color(0, 0, 0, 50f / 255);
+		}
+	}
+
+	void OnRotComplete()
+	{
+		if (m_goalLevel > 0)
+		{
+			GoalRenderer.sprite = GoalWindows[m_goalLevel - 1];
+			GoalRenderer.enabled = true;
+		}
+		else
+		{
+			GoalRenderer.enabled = false;
+
+			var render = GetComponent<SpriteRenderer>();
+
+			render.enabled = true;
+		}
+		GoalRenderer.transform.localRotation = Quaternion.identity;
+	}
+
+	public int GoalLevel
+	{
+		get { return m_goalLevel; }
+		set
+		{
+			if (value > GoalWindows.Length || value < 0)
+			{
+				throw new Exception("Failed set goal level " + value +
+				                    ", max level " + GoalWindows.Length);
+			}
+			var render = GetComponent<SpriteRenderer>();
+
+			if ( value > m_goalLevel )
+			{
+				GoalRenderer.enabled = true;
+				GoalRenderer.sprite = GoalWindows[value - 1];
+			
+				render.enabled = false;
+			}
+			else
+			{
+				HOTween.To(GoalRenderer.transform, 0.5f, 
+					new TweenParms()
+					.AutoKill(true)
+					.Prop("localRotation", new Vector3(0, 90))
+					.OnComplete(OnRotComplete));
+			}
+
+			m_goalLevel = value;
 		}
 	}
 

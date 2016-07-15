@@ -7,7 +7,14 @@ namespace Assets.Scripts.Utils
 {
 	public class EntityComponent
 	{
-		public virtual void Init( )
+		public Entity OwnerEntity { get; private set; }
+
+		public virtual void Init( Entity owner )
+		{
+			OwnerEntity = owner;
+		}
+
+		public virtual void Start( )
 		{
 		}
 

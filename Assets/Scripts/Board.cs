@@ -4,10 +4,14 @@ using System.Collections.Generic;
 using System.Xml;
 using System;
 using System.Runtime.InteropServices;
+using Assets.Scripts;
+using Assets.Scripts.Utils;
 using UnityEngine.Assertions;
 
 public class Board : MonoBehaviour
 {
+	private ObjectPool<Coin> m_coinsPool;
+	 
 	public Cell				cellPrefab;
 	public Coin				coinPrefab;
 	public float			dropSpeed;
@@ -15,9 +19,10 @@ public class Board : MonoBehaviour
 	public int Width { get; private set; }
 	public int Height { get; private set; }
 
-	public Action<Coin, Coin> 	OnCoinsSwap { get; set; }
-	public System.Action	 	OnBoardStable { get; set; }
-	public Action<List<Coin>> 	OnMatch { get; set; }
+	public event Action<Coin, Coin> OnCoinsSwap;
+	public event System.Action		OnBoardStable;
+	public event Action<List<Coin>> OnMatch;
+	public event Action<Coin>		OnCoinDestroy; 
 
 	// private section
 	private Cell[]		m_greed;
@@ -25,15 +30,12 @@ public class Board : MonoBehaviour
 	private float 		m_dieDelay = 1.2f;
 	private int []		m_lines;
 	private Vector3		m_spawnPosition;
-	private Level 		m_currLevel;
 	private Vector2		m_size;
 
 	public float DieDelay
 	{
 		get { return m_dieDelay; }
 	}
-
-	// Use this for initialization
 
 	public Vector3 GetRealPosition(int x, int y)
 	{	
@@ -91,21 +93,11 @@ public class Board : MonoBehaviour
 			cell.SetNeighbour(NeighbourPos.Bottom, GetCell(cell.Position.X, cell.Position.Y - 1));
 		}
 
-		var disableCoins = GameController.CurrentLevel.DisabledCells;
-		if (disableCoins != null)
+
+		var cellsInfo = GameController.CurrentLevel.GetComponent<CellsInfo>();
+		if (cellsInfo != null)
 		{
-			foreach (Point pos in disableCoins)
-			{
-				int index = posToIndex(pos);
-
-				var cell = GetCell(index);
-				if (cell != null)
-				{
-					cell.Empty = true;
-
-					cell.gameObject.SetActive(false);
-				}
-			}
+			cellsInfo.InitCells(this);
 		}
 	}
 
@@ -114,76 +106,37 @@ public class Board : MonoBehaviour
 	{
 		print ("map init w, h: " + w + ", " + h);
 		m_lines = new int[w];
-		float realCoinW = Cell.Width ;
-		float realCoinH = Cell.Height;
-
-		m_size = new Vector2 (w * realCoinW, h * realCoinH);
+		m_spawnPosition.y = (Cell.Height * h) + 20f;
+		m_spawnPosition.x = 0;
 		Width = w;
 		Height = h;
 		Count = w * h;
-
-		GameController.Instance.InitLevel ();
-
-		m_currLevel = GameController.CurrentLevel;
+		m_coinsPool = new ObjectPool<Coin>()
+		{
+			MakeFunc = () => Instantiate(coinPrefab),
+			DisableFunc = ( inst ) =>
+			{
+				if (OnCoinDestroy != null)
+					OnCoinDestroy.Invoke(inst);
+			}
+		};
 
 		RemoveList = new List<Coin> ();
 
 		CreateGreed ();
 
-		m_spawnPosition.y = m_size.y + 20f;
-		m_spawnPosition.x = 0;
-
 		Fill (true);
-		
-		float hw = (m_size.x / 2f) - (realCoinW / 2f);
-		float hh = (m_size.y / 2f) - (realCoinH / 2f);
-
-		float halfH = Screen.height / 2;
-		float delta = halfH - (m_size.y / 2f);
-
-		if (delta > 0) 
-		{
-			hh += (delta * 0.4f);
-		}
-
-		transform.localPosition = new Vector2(-hw, -hh);
 	}
 
 	public void Refresh()
 	{
-		var disableCoins = GameController.CurrentLevel.DisabledCells;
-		if (disableCoins != null && disableCoins.Count > 0)
+		var cellsInfo = GameController.CurrentLevel.GetComponent<CellsInfo>();
+		if (cellsInfo != null)
 		{
-			foreach (Point pos in disableCoins)
-			{
-				int index = posToIndex(pos);
-
-				var cell = GetCell(index);
-				if (cell != null)
-				{
-					cell.Empty = true;
-					var coin = getCoin(cell.Index);
-					if (coin != null)
-					{
-						coin.State = eCoinState.MarkDelete;
-						coin.gameObject.SetActive(false);
-					}
-
-					cell.gameObject.SetActive(false);
-				}
-			}
+			cellsInfo.InitCells(this);
 		}
-		else
-		{
-			foreach (var cell in m_greed)
-			{
-				if ( cell.Empty )
-				{
-					cell.Empty = false;
-					cell.gameObject.SetActive(true);
-				}
-			}
-		}
+
+		Fill(true);
 	}
 
 	public int Count { get; private set; }
@@ -266,7 +219,6 @@ public class Board : MonoBehaviour
 		{
 			ApplySwap(c1, c2);
 			print ("create move coins");
-			//Coin cid = c1.PlaceId < c2.PlaceId ? c1 : c2;
 
 			c1.MoveToSpeedBased(pos2, 0, swapSpeed, "");
 			c2.MoveToSpeedBased(pos1, 0, swapSpeed, "");
@@ -344,6 +296,11 @@ public class Board : MonoBehaviour
 			++m_busy;
 	}
 
+	public void FreeCoin(Coin c)
+	{
+		m_coinsPool.Delete(c);
+	}
+
 	public Coin CreateCoin(int placeId, int coinId, Sprite sp)
 	{
 		Cell cell = GetCell(placeId);
@@ -354,20 +311,7 @@ public class Board : MonoBehaviour
 
 		Point pos = IndexToPos(placeId);
 		
-		Coin coin = null;
-		if (RemoveList.Count > 0)
-		{	
-			coin = RemoveList[RemoveList.Count - 1];
-			
-			if(!RemoveList.Remove(coin) )
-			{
-				Debug.Log("Failed remove coin from remove list");
-			}	
-		}
-		else
-		{
-			coin = Instantiate (coinPrefab, new Vector3 (pos.X, pos.Y, 0f), Quaternion.identity) as Coin;
-		}
+		Coin coin = m_coinsPool.MakeNew();
 		
 		coin.transform.parent = transform;
 		if (sp == null)
@@ -389,6 +333,9 @@ public class Board : MonoBehaviour
 		for ( int y = 0; y < Height; ++y )
 		{
 			Cell cell = GetCell(x, y);
+			if (cell.Empty)
+				continue;
+
 			if (cell.CoinRef == null)
 			{
 				++coins;
@@ -422,64 +369,6 @@ public class Board : MonoBehaviour
 		}
 	}
 
-	bool FillForCell(int x, int y, bool init)
-	{
-		if (Lines[x] > 0)
-			return true;
-
-		int index = posToIndex(x, y);
-		bool update = false;
-		Cell cell = GetCell(index);
-
-		if (cell.CoinRef == null && !cell.Empty)
-		{
-			int ny = 0;//MoveCoinsDown(index, x, y, init);
-			
-			print ("ny: " + ny);
-			if (ny >= Height)
-			{
-				print ("create random coin");
-				Coin coin = m_currLevel.CoinForIndex(init, index);
-
-				if(coin == null)
-				{
-					return false;
-				}
-
-				if (!init)
-				{
-					coin.Delay = m_dieDelay;
-					
-					coin.transform.localPosition = coin.GetRealPosition() + m_spawnPosition;
-					
-					coin.MoveToSpeedBased(coin.GetRealPosition(), 0, dropSpeed, "drop");
-				}
-				else
-				{
-					coin.State = eCoinState.Idle;
-					
-					GetCell(coin.PlaceId).CoinRef = coin;
-				}
-				
-				update = true;
-			}
-		}
-
-		return update;
-	}
-
-	public void FillColumn(bool init, int x)
-	{
-		for ( int y = 0; y < Height; ++y )
-		{
-			Cell cell = GetCell(x, y);
-
-			cell.CoinRef = CreateRandomCoin(posToIndex(x, y));
-
-			cell.CoinRef.State = eCoinState.Idle;
-		}
-	}
-
 	void CleanBoard( )
 	{
 		for ( int i = 0; i < Count; ++i )
@@ -488,6 +377,8 @@ public class Board : MonoBehaviour
 
 			if ( cell.CoinRef != null )
 			{
+				cell.CoinRef.State = eCoinState.MarkDelete;
+				
 				cell.CoinRef.Destroy ( );
 
 				cell.CoinRef = null;
@@ -673,6 +564,8 @@ public class Board : MonoBehaviour
 			for ( int y = startY; y < Height; ++y )
 			{
 				Cell cell = GetCell ( x, y );
+				if (cell.Empty)
+					continue;
 
 				int index = posToIndex ( x, y );
 				cell.CoinRef = CreateRandomCoin ( index );
@@ -843,10 +736,5 @@ public class Board : MonoBehaviour
 		}
 
 		return TrySwap(startpick, endpick);;
-	}
-
-	public Vector2 CoinOffset
-	{
-		get { return m_size / 2; }
 	}
 }

@@ -1,9 +1,10 @@
 ﻿using System;
 using System.Collections;
 using System.Runtime.Serialization;
+using Assets.Scripts.Utils;
 
 [Serializable]
-public class Point
+public class Point : IJsonReader
 {	
 	public Point()
 	{
@@ -28,6 +29,13 @@ public class Point
 		get { return m_y; }
 		set { m_y = value; }
 	}
+
+	public void Read( JSONObject obj )
+	{
+		X = obj.GetInt("x");
+		Y = obj.GetInt("y");
+	}
+
 	
 	public int m_x;
 	public int m_y;

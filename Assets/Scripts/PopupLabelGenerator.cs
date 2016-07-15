@@ -1,13 +1,35 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using Assets.Scripts.Utils;
 using UnityEngine;
 
 namespace Assets.Scripts
 {
 	class PopupLabelGenerator : MonoBehaviour
 	{
+		private static readonly ObjectPool<PopupLabelInfo> m_labelPool;
+		
+		static PopupLabelGenerator()
+		{
+			m_labelPool = new ObjectPool<PopupLabelInfo>();
+			m_labelPool.MakeFunc = () =>
+			{
+				var lp = Instance.LabelPrefab;
+				var label = Instantiate(lp);
+				label.transform.SetParent(Instance.transform);
+				var labelInfo = new PopupLabelInfo
+				{
+					Label = label,
+					MoveSpeed = new Vector2(0, 10),
+					LifeTime = 2f,
+					Delay = 1f,
+					Free = false
+				};
+
+				return labelInfo;
+			};
+		}
+
 		public PopupLabel LabelPrefab;
 
 		public class PopupLabelInfo
@@ -19,53 +41,19 @@ namespace Assets.Scripts
 			public bool		Free;
 		}
 
-		private List<PopupLabelInfo> m_labels = new List<PopupLabelInfo>(); 
-		private List<PopupLabelInfo> m_freeLabels = new List<PopupLabelInfo>(); 
+		private readonly List<PopupLabelInfo> m_labels = new List<PopupLabelInfo>(); 
+
 		public static PopupLabelGenerator Instance { get; private set; }
 
 		public void Print( String text, Vector3 startPos, 
 			Vector2 moveSpeed, float lifeTime, float delay )
 		{
-			PopupLabelInfo labelInfo = FindFree();
-			if (labelInfo != null)
-			{
-				labelInfo.Free = false;
-				labelInfo.LifeTime = lifeTime;
-				labelInfo.Delay = delay;
-				labelInfo.MoveSpeed = moveSpeed;
-				labelInfo.Label.Init( text, startPos );
-			}
-			else
-			{
-				var label = Instantiate(LabelPrefab, startPos, Quaternion.identity) as PopupLabel;
-				label.Init( text, startPos );
-				label.transform.parent = transform;
-				labelInfo = new PopupLabelInfo
-				{
-					Label = label,
-					MoveSpeed = moveSpeed,
-					LifeTime = lifeTime,
-					Delay = delay,
-					Free = false
-				};
+			PopupLabelInfo labelInfo = m_labelPool.MakeNew ( );
 
-				m_labels.Add(labelInfo);
-			}
-		}
-
-		PopupLabelInfo FindFree( )
-		{
-			if ( m_freeLabels.Count > 0 )
-			{
-				var lastIndex = m_freeLabels.Count - 1;
-				var pl = m_freeLabels[lastIndex];
-
-				m_freeLabels.RemoveAt(lastIndex);
-
-				return pl;
-			}
-
-			return null;
+			labelInfo.LifeTime = lifeTime;
+			labelInfo.Delay = delay;
+			labelInfo.MoveSpeed = moveSpeed;
+			labelInfo.Label.Init ( text, startPos );
 		}
 
 		void Awake( )
@@ -73,6 +61,17 @@ namespace Assets.Scripts
 			if (Instance == null)
 			{
 				Instance = this;
+				m_labelPool.EnableFunc = info =>
+				{
+					info.Label.gameObject.SetActive(false);
+					m_labels.Add(info);
+				};
+
+				m_labelPool.DisableFunc = info =>
+				{
+					info.Label.gameObject.SetActive(false);
+					m_labels.Remove(info);
+				};
 			}
 			else
 			{
@@ -82,17 +81,17 @@ namespace Assets.Scripts
 
 		void Update( )
 		{
-			foreach (var popupLabel in m_labels)
-			{
-				if ( popupLabel.Free )
-					continue;
+			if (m_labels.Count == 0)
+				return;
 
+			List<PopupLabelInfo> labels = new List<PopupLabelInfo>(m_labels);
+			foreach (var popupLabel in labels)
+			{
 				popupLabel.Delay -= Time.deltaTime;
 				if (popupLabel.Delay < 0)
 				{
-					var go = popupLabel.Label.gameObject;
-					if (!go.activeSelf)
-						go.SetActive(true);
+					if (!popupLabel.Label.gameObject.activeSelf)
+						popupLabel.Label.gameObject.SetActive(true);
 
 					popupLabel.Label.AddPosition(popupLabel.MoveSpeed * Time.deltaTime);
 
@@ -101,14 +100,8 @@ namespace Assets.Scripts
 
 				if ( popupLabel.LifeTime < 0 )
 				{
-					popupLabel.Free = true;
-					m_freeLabels.Add(popupLabel);
+					m_labelPool.Delete(popupLabel);
 				}
-			}
-
-			foreach (var popupLabelInfo in m_freeLabels)
-			{
-				popupLabelInfo.Label.gameObject.SetActive(false);
 			}
 		}
 	}
