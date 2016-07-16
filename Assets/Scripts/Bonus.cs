@@ -58,7 +58,7 @@ public class BurnLineBonus : Bonus
 		Point step = m_offsets[(int)m_orient];
 		for (int i = 0; i < count; ++i) 
 		{
-			map.getCoin (pos.X, pos.Y);
+			map.GetCoin (pos.X, pos.Y);
 
 		}
 	}

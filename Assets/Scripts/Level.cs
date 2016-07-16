@@ -127,6 +127,10 @@ namespace Assets.Scripts
 			{
 				GameController.Instance.timeBar.fillAmount = Time/TotalTime;
 			}
+			else if (GameController.Instance.board.IsStable)
+			{
+				GameController.Instance.OnLevelFail();
+			}
 		}
 	}
 

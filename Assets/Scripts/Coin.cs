@@ -98,9 +98,6 @@ namespace Assets.Scripts
 		public void Init(int placeId, int x, int y, int coinId, Sprite sp)
 		{
 			print("[Coin] init placeId: " + placeId);
-
-			Level currLevel = GameController.CurrentLevel;
-
 			SpriteRenderer spriteRenderer = GetComponent<SpriteRenderer>();
 
 			m_coinId = coinId;
@@ -112,19 +109,26 @@ namespace Assets.Scripts
 			spriteRenderer.enabled = true;
 			GetComponent<BoxCollider2D>().enabled = true;
 			RefreshPosition();
-			m_stateMachine = new StateMachine<eCoinState>(eCoinState.Idle, this);
+			if (m_stateMachine != null)
+			{
+				m_stateMachine.SetState(eCoinState.Idle);
+			}
+			else
+			{
+				m_stateMachine = new StateMachine<eCoinState>(eCoinState.Idle, this);
 
-			m_stateMachine.AddState(eCoinState.Idle,
-				new List<eCoinState> {eCoinState.Moved, eCoinState.MarkDelete});
+				m_stateMachine.AddState(eCoinState.Idle,
+					new List<eCoinState> {eCoinState.Moved, eCoinState.MarkDelete});
 
-			m_stateMachine.AddState(eCoinState.Moved,
-				new List<eCoinState> {eCoinState.Idle});
+				m_stateMachine.AddState(eCoinState.Moved,
+					new List<eCoinState> {eCoinState.Idle});
 
-			m_stateMachine.AddState(eCoinState.MarkDelete,
-				new List<eCoinState> {eCoinState.Deleted});
+				m_stateMachine.AddState(eCoinState.MarkDelete,
+					new List<eCoinState> {eCoinState.Deleted});
 
-			m_stateMachine.AddState(eCoinState.Deleted,
-				new List<eCoinState> {eCoinState.Idle});
+				m_stateMachine.AddState(eCoinState.Deleted,
+					new List<eCoinState> {eCoinState.Idle});
+			}
 		}
 
 		public void OnSpawn(Vector3 spawnOffset, float delay)
