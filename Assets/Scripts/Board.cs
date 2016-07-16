@@ -138,6 +138,15 @@ public class Board : MonoBehaviour
 
 	public void Refresh()
 	{
+		foreach (Cell cell in Greed)
+		{
+			if (cell.Empty)
+			{
+				cell.Empty = false;
+				cell.gameObject.SetActive(true);
+			}
+		}
+
 		var cellsInfo = GameController.CurrentLevel.GetComponent<CellsInfo>();
 		if (cellsInfo != null)
 		{
