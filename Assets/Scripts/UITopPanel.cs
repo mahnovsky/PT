@@ -42,6 +42,9 @@ public class UITopPanel : MonoBehaviour
 			{
 				TotalScore.text = goal.TotalScore.ToString();
 			}
+
+			OnWindowsUpdate(0);
+			OnScoreUpdate(0);
 		}
 
 		m_levelLabel.text = level.Number.ToString();

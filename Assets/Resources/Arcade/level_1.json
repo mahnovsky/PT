@@ -1,7 +1,6 @@
 {
-	"type":"Classic",
-	"level":{
-		"disabledCells":[
+	"CellsInfo":{
+		"disabled":[
 			{
 				"x":0,
 				"y":7
@@ -67,7 +66,30 @@
 				"y":0
 			}
 		],
-		"moveCount":10,
-		"time":10
+		"goalWindows":[
+			{
+				"x":4,
+				"y":4,
+				"level":1
+			},
+			{
+				"x":4,
+				"y":3,
+				"level":2
+			}
+		]
+	},
+	"GoalController":
+	{
+		"needScore":500,
+		"windows":3
+	},
+	"MoveCounter":
+	{
+		"moveCount": 10
+	},
+	"ScoreCounter":
+	{
+		"stepTime":0.01
 	}
 }

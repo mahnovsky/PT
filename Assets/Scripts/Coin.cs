@@ -79,6 +79,18 @@ namespace Assets.Scripts
 		private bool m_disabled = false;
 		private string m_msg;
 
+		public int MatchID { get; set; }
+
+		void OnTriggerEnter2D( Collider2D other )
+		{
+			if (other.tag.Equals("Finish"))
+			{
+				SpriteRenderer spriteRenderer = GetComponent<SpriteRenderer>();
+				spriteRenderer.enabled = true;
+				GetComponent<Rigidbody2D>().isKinematic = true;
+			}
+		}
+
 		static Coin()
 		{
 			m_effectsPool = new ObjectPool<ParticleSystem>();
@@ -100,14 +112,16 @@ namespace Assets.Scripts
 			print("[Coin] init placeId: " + placeId);
 			SpriteRenderer spriteRenderer = GetComponent<SpriteRenderer>();
 
+			MatchID = -1;
 			m_coinId = coinId;
 
 			spriteRenderer.sprite = sp;
 
 			UpdateLoc(placeId, x, y);
 
-			spriteRenderer.enabled = true;
+			spriteRenderer.enabled = GameController.Instance.board.IsBoardInit;
 			GetComponent<BoxCollider2D>().enabled = true;
+			GetComponent<Rigidbody2D>().isKinematic = GameController.Instance.board.IsBoardInit;
 			RefreshPosition();
 			if (m_stateMachine != null)
 			{

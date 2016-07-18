@@ -31,7 +31,8 @@ public class GameManager : MonoBehaviour
 	public static bool Pause { get; set; }
 	private		IScene			m_scene;
 	private		IScene			m_currentScene;
-	private		GameObject		m_currentPanel;
+
+	public GameObject CurrentPanel { get; private set; }
 
 	void Awake ()
 	{
@@ -94,17 +95,17 @@ public class GameManager : MonoBehaviour
 		panel.SetActive(true);
 		shadow.SetActive(true);
 
-		m_currentPanel = panel;
+		CurrentPanel = panel;
 
 		Pause = true;
 	}
 
 	public void OnClosePanel( )
 	{
-		m_currentPanel.SetActive(false);
+		CurrentPanel.SetActive(false);
 		shadow.SetActive(false);
 
-		m_currentPanel = null;
+		CurrentPanel = null;
 
 		Pause = false;
 	}

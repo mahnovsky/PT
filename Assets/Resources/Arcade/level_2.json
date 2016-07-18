@@ -1,7 +1,57 @@
 {
-	"type":"Classic",
-	"level":{
-		"disabledCells":[],
-		"moveCount":2
+	"CellsInfo":{
+		"disabled":[
+			{
+				"x":0,
+				"y":7
+			},
+			{
+				"x":0,
+				"y":0
+			},
+			{
+				"x":7,
+				"y":7
+			},
+			{
+				"x":7,
+				"y":0
+			}
+		],
+		"goalWindows":[
+      {
+        "x": 4,
+        "y": 4,
+        "level": 1
+      },
+      {
+        "x": 3,
+        "y": 4,
+        "level": 2
+      },
+      {
+				"x":3,
+				"y":3,
+				"level":1
+			},
+			{
+				"x":4,
+				"y":3,
+				"level":2
+			}
+		]
+	},
+	"GoalController":
+	{
+		"needScore":500,
+		"windows":6
+	},
+	"LevelTimer":
+	{
+		"time": 40
+	},
+	"ScoreCounter":
+	{
+		"stepTime":0.01
 	}
 }

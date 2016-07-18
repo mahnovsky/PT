@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using Assets.Scripts.Utils;
 
 namespace Assets.Scripts
@@ -32,8 +30,8 @@ namespace Assets.Scripts
 
 		public override void Load( JSONObject obj )
 		{
-			Disabled = obj.GetArray<Point>("disabled");
-			GoalWindows = obj.GetArray<GoalWindowInfo> ("goalWindows");
+			Disabled	= obj.GetArray<Point>			("disabled");
+			GoalWindows = obj.GetArray<GoalWindowInfo>	("goalWindows");
 		}
 
 		public void InitCells( Board board )
@@ -81,10 +79,14 @@ namespace Assets.Scripts
 			if ( c.GoalLevel > 0 )
 			{
 				c.GoalLevel = c.GoalLevel - 1;
-				--m_windows;
-				if ( OnWindowsChange != null )
+
+				if ( c.GoalLevel == 0 )
 				{
-					OnWindowsChange.Invoke(TotalWindows - m_windows);
+					--m_windows;
+					if ( OnWindowsChange != null )
+					{
+						OnWindowsChange.Invoke ( TotalWindows - m_windows );
+					}
 				}
 			}
 		}
@@ -114,6 +116,8 @@ namespace Assets.Scripts
 
 			m_board.OnCoinDestroy	+= OnCoinDestroy;
 			m_board.OnBoardStable	+= OnBoardStable;
+			var cinfo = OwnerEntity.GetComponent<CellsInfo>();
+			TotalWindows = cinfo.GoalWindows.Count;
 
 			Refresh();
 		}
@@ -127,7 +131,6 @@ namespace Assets.Scripts
 		public override void Load(JSONObject obj)
 		{
 			TotalScore		= obj.GetInt("needScore");
-			TotalWindows	= obj.GetInt("windows");
 		}
 	}
 }

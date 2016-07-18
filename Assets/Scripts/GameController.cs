@@ -17,6 +17,8 @@ public class GameController : MonoBehaviour
 	public GameObject		winPanel;
 
 	public Image			timeBar;
+	public GameObject		movesPanel;
+	public Text				MovesCountText;
 
 	public GameObject		background;
 	public bool				enableCheats	= true;
@@ -29,6 +31,7 @@ public class GameController : MonoBehaviour
 	private Sprite			m_currSprite;
 	private Texture2D		m_texture;
 	private string			m_number		= "";
+	private GameObject		m_levelEndPanel;
 
 	public event Action OnUpdate;
 	public LevelList LevelList { get; private set; }
@@ -37,6 +40,12 @@ public class GameController : MonoBehaviour
 	{
 		if (OnUpdate != null)
 			OnUpdate.Invoke ();
+
+		if (GameManager.Instance.CurrentPanel == null)
+		{
+			if (m_levelEndPanel != null && !m_levelEndPanel.activeSelf)
+				GameManager.Instance.OnEnablePanel(m_levelEndPanel);
+		}
 	}
 
 	void Awake()
@@ -193,22 +202,24 @@ public class GameController : MonoBehaviour
 	public void OnNextLevel()
 	{
 		++LevelNum;
+		m_levelEndPanel = null;
 		InitLevel();
 		board.Refresh();
 	}
 
 	public void OnLevelFail()
 	{
-		GameManager.Instance.OnEnablePanel(failPanel);
+		m_levelEndPanel = failPanel;
 	}
 
 	public void OnLevelWin()
 	{
-		GameManager.Instance.OnEnablePanel(winPanel);	
+		m_levelEndPanel = winPanel;
 	}
 
 	public void Repeat()
 	{
+		m_levelEndPanel = null;
 		CurrentLevel.Refresh();
 		board.Refresh();
 		GameManager.Instance.OnClosePanel ();

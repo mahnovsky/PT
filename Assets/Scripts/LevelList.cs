@@ -35,10 +35,10 @@ namespace Assets.Scripts
 
 			level.Load ( jsonObject );
 
+			level.Init();
+
 			if (OnLevelChange != null)
 				OnLevelChange.Invoke(level);
-
-			level.Init();
 
 			return level;
 		}

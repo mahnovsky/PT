@@ -22,18 +22,19 @@ namespace Assets.Scripts
 
 		public void OnButtonPress( string name )
 		{
-			m_manager.GameDirectory = name;
-
 			if ( name == "Arcade" )
 			{
+				GameManager.Instance.GameDirectory = name;
+				m_manager.RunScene<GameUI> (SceneMove.Left);
 			}
 			else if ( name == "Time" )
 			{
+				GameManager.Instance.GameDirectory = name;
 				m_manager.RunScene<GameUI> (SceneMove.Left);
 			}
 			else if (name == "OtherGames")
 			{
-				
+				Application.OpenURL("http://greyheadstudio.com/");
 			}
 		}
 

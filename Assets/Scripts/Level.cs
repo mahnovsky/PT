@@ -29,6 +29,11 @@ namespace Assets.Scripts
 			var board = GameController.Instance.board;
 
 			board.OnCoinsSwap += OnCoinsSwap;
+			board.OnBoardStable += OnBoardStable;
+
+			var controller = GameController.Instance;
+	
+			controller.movesPanel.gameObject.SetActive(true);
 
 			Debug.Log("Hello From MoveCounter");
 		}
@@ -38,17 +43,25 @@ namespace Assets.Scripts
 			var board = GameController.Instance.board;
 
 			board.OnCoinsSwap -= OnCoinsSwap;
+			board.OnBoardStable -= OnBoardStable;
+
+			GameController.Instance.movesPanel.gameObject.SetActive(false);
 		}
 
 		public override void Refresh()
 		{
 			Moves = TotalMoves;
+			GameController.Instance.MovesCountText.text = Moves.ToString();
 		}
-
+		
 		private void OnCoinsSwap(Coin c1, Coin c2)
 		{
 			--Moves;
+			GameController.Instance.MovesCountText.text = Moves.ToString();
+		}
 
+		void OnBoardStable()
+		{
 			if (Moves <= 0)
 			{
 				GameController.Instance.OnLevelFail();
@@ -106,6 +119,7 @@ namespace Assets.Scripts
 			controller.OnUpdate -= Update;
 			controller.board.OnMatch -= OnMatch;
 			controller.board.OnBoardStable -= OnBoardStable;
+			controller.timeBar.gameObject.SetActive(true);
 		}
 
 		public override void Refresh()
